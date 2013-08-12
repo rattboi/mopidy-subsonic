@@ -2,7 +2,7 @@ Mopidy-Subsonic
 ============
 
 `Mopidy <http://www.mopidy.com/>`_ extension for playing music from
-
+`Subsonic <http://www.subsonic.org/>`
 Note
 ====
 
@@ -21,8 +21,8 @@ Usage
     [subsonic]
     hostname = 127.0.0.1
     port = 8888
-    user = USER
-    pass = PASS
+    username = USER
+    password = PASS
 
 #. Restart Mopidy.
 

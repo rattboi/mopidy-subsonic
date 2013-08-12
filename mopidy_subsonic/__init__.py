@@ -20,8 +20,7 @@ requests
 
 """
 
-__version__ = '0.0.1'
-
+__version__ = '0.1'
 
 class SubsonicExtension(ext.Extension):
 
@@ -43,9 +42,9 @@ class SubsonicExtension(ext.Extension):
 
     def validate_environment(self):
         try:
-            import requests  # noqa
+            import libsonic 
         except ImportError as e:
-            raise ExtensionError('Library requests not found', e)
+            raise ExtensionError('Library libsonic not found', e)
 
     def get_backend_classes(self):
         from .actor import SubsonicBackend

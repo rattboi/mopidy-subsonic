@@ -24,7 +24,7 @@ setup(
     install_requires=[
         'setuptools',
         'Mopidy',
-        'requests',
+        'py-sonic',
     ],
     entry_points={
         b'mopidy.ext': [

@@ -13,7 +13,7 @@ from mopidy.models import Track, Album, Artist
 logger = logging.getLogger('mopidy.backends.subsonic.client')
 
 class cache(object):
-    ## TODO: merge this to util library
+    # TODO: merge this to util library
     def __init__(self, ctl=8, ttl=3600):
         self.cache = {}
         self.ctl = ctl
@@ -47,18 +47,18 @@ class cache(object):
 
 class SubsonicRemoteClient(object):
 
-    def __init__(self, endpoint, port, username, password):
+    def __init__(self, hostname, port, username, password):
         super(SubsonicRemoteClient, self).__init__()
-        #self.api = requests.Session()
-        if not (endpoint and port and username and password):
-          logger.error('Subsonic API settings are not fully defined: %s %s %s %s' % (endpoint, port, username, password))
+
+        if not (hostname and port and username and password):
+          logger.error('Subsonic API settings are not fully defined: %s %s %s %s' % (hostname, port, username, password))
         else:
-            self.api_endpoint = endpoint
+            self.api_hostname = hostname
             self.api_port = port
             self.api_user = username
             self.api_pass = password
-            self.api = libsonic.Connection(self.api_endpoint, self.api_user, self.api_pass, port=int(self.api_port))
-            logger.info('Connecting to Subsonic library %s:%s as user %s', self.api_endpoint, self.api_port, self.api_user)
+            self.api = libsonic.Connection(self.api_hostname, self.api_user, self.api_pass, port=int(self.api_port))
+            logger.info('Connecting to Subsonic library %s:%s as user %s', self.api_hostname, self.api_port, self.api_user)
             try:
                 self.api.getIndexes()
             except Exception as e:
@@ -107,7 +107,7 @@ class SubsonicRemoteClient(object):
     def _get(self, url):
         try:
             indexes = self.api.getIndexes()
-            url = self.api_endpoint + ":" + self.api_port + url
+            url = self.api_hostname + ":" + self.api_port + url
             logger.debug('Requesting %s' % url)
             #req = self.api.get(url)
             #if req.status_code != 200:
@@ -141,67 +141,67 @@ class SubsonicRemoteClient(object):
         albumartist_kwargs = {}
 
         if 'track' in data:
-            track_kwargs[b'track_no'] = int(data['track'])
+            track_kwargs['track_no'] = int(data['track'])
 
         if 'tracktotal' in data:
-            album_kwargs[b'num_tracks'] = int(data['tracktotal'])
+            album_kwargs['num_tracks'] = int(data['tracktotal'])
 
         if 'artist' in data:
-            artist_kwargs[b'name'] = data['artist']
-            albumartist_kwargs[b'name'] = data['artist']
+            artist_kwargs['name'] = data['artist']
+            albumartist_kwargs['name'] = data['artist']
 
         if 'name' in data:
-            artist_kwargs[b'name'] = data['name']
-            albumartist_kwargs[b'name'] = data['name']
+            artist_kwargs['name'] = data['name']
+            albumartist_kwargs['name'] = data['name']
 
         if 'albumartist' in data:
-            albumartist_kwargs[b'name'] = data['albumartist']
+            albumartist_kwargs['name'] = data['albumartist']
 
         if 'album' in data:
-            album_kwargs[b'name'] = data['album']
+            album_kwargs['name'] = data['album']
 
         if 'title' in data:
-            track_kwargs[b'name'] = data['title']
+            track_kwargs['name'] = data['title']
 
         if 'date' in data:
-            track_kwargs[b'date'] = data['date']
+            track_kwargs['date'] = data['date']
 
         if 'mb_trackid' in data:
-            track_kwargs[b'musicbrainz_id'] = data['mb_trackid']
+            track_kwargs['musicbrainz_id'] = data['mb_trackid']
 
         if 'mb_albumid' in data:
-            album_kwargs[b'musicbrainz_id'] = data['mb_albumid']
+            album_kwargs['musicbrainz_id'] = data['mb_albumid']
 
         if 'mb_artistid' in data:
-            artist_kwargs[b'musicbrainz_id'] = data['mb_artistid']
+            artist_kwargs['musicbrainz_id'] = data['mb_artistid']
 
         if 'mb_albumartistid' in data:
-            albumartist_kwargs[b'musicbrainz_id'] = (
+            albumartist_kwargs['musicbrainz_id'] = (
                 data['mb_albumartistid'])
 
         if 'album_id' in data:
             album_art_url = '%s/album/%s/art' % (
-                self.api_endpoint, data['album_id'])
-            album_kwargs[b'images'] = [album_art_url]
+                self.api_hostname, data['album_id'])
+            album_kwargs['images'] = [album_art_url]
 
         if artist_kwargs:
             artist = Artist(**artist_kwargs)
-            track_kwargs[b'artists'] = [artist]
+            track_kwargs['artists'] = [artist]
 
         if albumartist_kwargs:
             albumartist = Artist(**albumartist_kwargs)
-            album_kwargs[b'artists'] = [albumartist]
+            album_kwargs['artists'] = [albumartist]
 
         if album_kwargs:
             album = Album(**album_kwargs)
-            track_kwargs[b'album'] = album
+            track_kwargs['album'] = album
 
         if remote_url:
-            track_kwargs[b'uri'] = '%s/item/%s/file' % (
-                self.api_endpoint, data['id'])
+            track_kwargs['uri'] = '%s/item/%s/file' % (
+                self.api_hostname, data['id'])
         else:
-            track_kwargs[b'uri'] = 'subsonic://%s' % data['id']
-        track_kwargs[b'length'] = int(data.get('length', 0)) * 1000
+            track_kwargs['uri'] = 'subsonic://%s' % data['id']
+        track_kwargs['length'] = int(data.get('length', 0)) * 1000
 
         track = Track(**track_kwargs)
 

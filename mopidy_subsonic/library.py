@@ -13,10 +13,10 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
 
     def __init__(self, *args, **kwargs):
         super(SubsonicLibraryProvider, self).__init__(*args, **kwargs)
-        self.remote = SubsonicRemoteClient(settings.SUBSONIC_SERVER_URI,
-            settings.SUBSONIC_SERVER_PORT,
-            settings.SUBSONIC_USERNAME,
-            settings.SUBSONIC_PASSWORD)
+        self.remote = SubsonicRemoteClient(config.Hostname(),
+            config.Port(),
+            config.Username(),
+            config.Password())
 
     def find_exact(self, query=None, uris=None):
             return self.search(query=query, uris=uris)

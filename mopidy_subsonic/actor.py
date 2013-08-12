@@ -7,7 +7,6 @@ from mopidy import settings
 from mopidy.backends import base
 
 from .library import SubsonicLibraryProvider
-from .client import SubsonicRemoteClient
 
 logger = logging.getLogger('mopidy.backends.subsonic')
 
@@ -16,11 +15,7 @@ class SubsonicBackend(pykka.ThreadingActor, base.Backend):
     def __init__(self, config, audio):
         super(SubsonicBackend, self).__init__()
 
-        subsonic_endpoint = 'http://%s:%s' % (
-            config['subsonic']['hostname'], config['subsonic']['port'])
-
-        #self.beets_api = SubsonicRemoteClient(beets_endpoint)
-        self.library = SubsonicLibraryProvider(backend=self)
+        self.library = SubsonicLibraryProvider(backend=self, config=config)
         self.playback = SubsonicPlaybackProvider(audio=audio, backend=self)
         self.playlists = None
 
@@ -33,5 +28,5 @@ class SubsonicPlaybackProvider(base.BasePlaybackProvider):
     def play(self, track):
         id = track.uri.split(';')[1]
         logger.info('Getting info for track %s with id %s' % (track.uri, id))
-        #track = self.backend.beets_api.get_track(id, True)
+        track = self.backend.remote.get_track(id, True)
         return super(SubsonicPlaybackProvider, self).play(track)

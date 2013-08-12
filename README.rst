@@ -2,7 +2,7 @@ Mopidy-Subsonic
 ============
 
 `Mopidy <http://www.mopidy.com/>`_ extension for playing music from
-`Subsonic <http://www.subsonic.org/>`
+`Subsonic <http://www.subsonic.org/>`_
 
 Note
 ====

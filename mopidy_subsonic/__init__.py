@@ -4,18 +4,15 @@ import os
 from mopidy import ext, config
 from mopidy.exceptions import ExtensionError
 
+__doc__ = """A extension for playing music from Subsonic.
 
-__doc__ = """A extension for playing music from Beets.
+This extension handles URIs starting with ``subsonic:`` and enables you to play music using a Subsonic server.
 
-This extension handles URIs starting with ``beets:`` and enables you,
-to play music from Beets web service.
-
-See https://github.com/dz0ny/mopidy-beets/ for further instructions on
-using this extension.
+See https://github.com/rattboi/mopidy-subsonic/ for further instructions on using this extension.
 
 **Issues:**
 
-https://github.com/dz0ny/mopidy-beets/issues
+https://github.com/rattboi/mopidy-subsonic/issues
 
 **Dependencies:**
 
@@ -23,13 +20,13 @@ requests
 
 """
 
-__version__ = '1.0.2'
+__version__ = '0.0.1'
 
 
-class BeetsExtension(ext.Extension):
+class SubsonicExtension(ext.Extension):
 
-    dist_name = 'Mopidy-Beets'
-    ext_name = 'beets'
+    dist_name = 'Mopidy-Subsonic'
+    ext_name = 'subsonic'
     version = __version__
 
     def get_default_config(self):
@@ -37,9 +34,11 @@ class BeetsExtension(ext.Extension):
         return config.read(conf_file)
 
     def get_config_schema(self):
-        schema = super(BeetsExtension, self).get_config_schema()
+        schema = super(SubsonicExtension, self).get_config_schema()
         schema['hostname'] = config.Hostname()
         schema['port'] = config.Port()
+        schema['username'] = config.Username()
+        schema['password'] = config.Password()
         return schema
 
     def validate_environment(self):
@@ -49,5 +48,5 @@ class BeetsExtension(ext.Extension):
             raise ExtensionError('Library requests not found', e)
 
     def get_backend_classes(self):
-        from .actor import BeetsBackend
-        return [BeetsBackend]
+        from .actor import SubsonicBackend
+        return [SubsonicBackend]

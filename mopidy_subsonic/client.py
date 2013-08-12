@@ -4,19 +4,16 @@
 from __future__ import unicode_literals
 
 import logging
-import requests
+import libsonic
 import time
-import urllib
+from pprint import pprint
 
-from requests.exceptions import RequestException
 from mopidy.models import Track, Album, Artist
 
-logger = logging.getLogger('mopidy.backends.beets.client')
-
+logger = logging.getLogger('mopidy.backends.subsonic.client')
 
 class cache(object):
-    # TODO: merge this to util library
-
+    ## TODO: merge this to util library
     def __init__(self, ctl=8, ttl=3600):
         self.cache = {}
         self.ctl = ctl
@@ -48,36 +45,52 @@ class cache(object):
         return _memoized
 
 
-class BeetsRemoteClient(object):
+class SubsonicRemoteClient(object):
 
-    def __init__(self, endpoint):
-        super(BeetsRemoteClient, self).__init__()
-        self.api = requests.Session()
-        self.has_connection = False
-        self.api_endpoint = endpoint
-        logger.info('Connecting to Beets remote library %s', endpoint)
-        try:
-            self.api.get(self.api_endpoint)
-            self.has_connection = True
-        except RequestException as e:
-            logger.error('Beets error: %s' % e)
+    def __init__(self, endpoint, port, username, password):
+        super(SubsonicRemoteClient, self).__init__()
+        #self.api = requests.Session()
+        if not (endpoint and port and username and password):
+          logger.error('Subsonic API settings are not fully defined: %s %s %s %s' % (endpoint, port, username, password))
+        else:
+            self.api_endpoint = endpoint
+            self.api_port = port
+            self.api_user = username
+            self.api_pass = password
+            self.api = libsonic.Connection(self.api_endpoint, self.api_user, self.api_pass, port=int(self.api_port))
+            logger.info('Connecting to Subsonic library %s:%s as user %s', self.api_endpoint, self.api_port, self.api_user)
+            try:
+                self.api.getIndexes()
+            except Exception as e:
+                print("exception")
+                logger.error('Subsonic Authentication error: %s' % e)
 
     @cache()
-    def get_tracks(self):
-        track_ids = self._get('/item/').get('item_ids')
-        tracks = []
-        for track_id in track_ids:
-            tracks.append(self.get_track(track_id))
-        return tracks
+    def get_artists(self):
+        artist_list = self.api.getArtists().get('artists').get('index')
+        categories = []
+        for x in xrange(len(artist_list)):
+          categories.append(artist_list[x].get('artist'))
 
+        artists = []
+        for category in xrange(len(categories)):
+          for artist in xrange(len(categories[category])):
+            artists.append(categories[category][artist])
+
+        tracks = []
+        for artist in artists:
+            tracks.append(self.get_track(artist))
+        return tracks
+      
     @cache(ctl=16)
     def get_track(self, id, remote_url=False):
-        return self._convert_json_data(self._get('/item/%s' % id), remote_url)
+        stuff = self._convert_data(id, remote_url)
+        #pprint(stuff)
+        return stuff
 
     @cache()
     def get_item_by(self, name):
-        res = self._get('/item/query/%s' %
-                        urllib.quote(name)).get('results')
+        res = self._get('/item/query/%s' % name).get('results')
         try:
             return self._parse_query(res)
         except Exception:
@@ -85,8 +98,7 @@ class BeetsRemoteClient(object):
 
     @cache()
     def get_album_by(self, name):
-        res = self._get('/album/query/%s' %
-                        urllib.quote(name)).get('results')
+        res = self._get('/album/query/%s' % name).get('results')
         try:
             return self._parse_query(res[0]['items'])
         except Exception:
@@ -94,28 +106,30 @@ class BeetsRemoteClient(object):
 
     def _get(self, url):
         try:
-            url = self.api_endpoint + url
+            indexes = self.api.getIndexes()
+            url = self.api_endpoint + ":" + self.api_port + url
             logger.debug('Requesting %s' % url)
-            req = self.api.get(url)
-            if req.status_code != 200:
-                raise logger.error('Request %s, failed with status code %s' % (
-                    url, req.status_code))
+            #req = self.api.get(url)
+            #if req.status_code != 200:
+                #raise logger.error('Request %s, failed with status code %s' % (
+                    #url, req.status_code))
 
-            return req.json()
+            #return req.json()
+            return indexes
         except Exception as e:
-            return False
             logger.error('Request %s, failed with error %s' % (
                 url, e))
+            return False
 
     def _parse_query(self, res):
         if len(res) > 0:
             tracks = []
             for track in res:
-                tracks.append(self._convert_json_data(track))
+                tracks.append(self._convert_data(track))
             return tracks
         return None
 
-    def _convert_json_data(self, data, remote_url=False):
+    def _convert_data(self, data, remote_url=False):
         if not data:
             return
         # NOTE kwargs dict keys must be bytestrings to work on Python < 2.6.5
@@ -135,6 +149,10 @@ class BeetsRemoteClient(object):
         if 'artist' in data:
             artist_kwargs[b'name'] = data['artist']
             albumartist_kwargs[b'name'] = data['artist']
+
+        if 'name' in data:
+            artist_kwargs[b'name'] = data['name']
+            albumartist_kwargs[b'name'] = data['name']
 
         if 'albumartist' in data:
             albumartist_kwargs[b'name'] = data['albumartist']
@@ -182,7 +200,7 @@ class BeetsRemoteClient(object):
             track_kwargs[b'uri'] = '%s/item/%s/file' % (
                 self.api_endpoint, data['id'])
         else:
-            track_kwargs[b'uri'] = 'beets:track;%s' % data['id']
+            track_kwargs[b'uri'] = 'subsonic://%s' % data['id']
         track_kwargs[b'length'] = int(data.get('length', 0)) * 1000
 
         track = Track(**track_kwargs)

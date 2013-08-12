@@ -10,7 +10,7 @@ def get_version(filename):
     return metadata['version']
 
 setup(
-    name='Mopidy-Beets',
+    name='Mopidy-Subsonic',
     version=get_version('mopidy_subsonic/__init__.py'),
     url='http://github.com/rattboi/mopidy-subsonic/',
     license='MIT',

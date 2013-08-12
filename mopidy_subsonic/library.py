@@ -5,14 +5,18 @@ import logging
 from mopidy.backends import base
 from mopidy.models import SearchResult
 
-logger = logging.getLogger('mopidy.backends.beets')
+from .client import SubsonicRemoteClient
 
+logger = logging.getLogger('mopidy.backends.subsonic')
 
-class BeetsLibraryProvider(base.BaseLibraryProvider):
+class SubsonicLibraryProvider(base.BaseLibraryProvider):
 
     def __init__(self, *args, **kwargs):
-        super(BeetsLibraryProvider, self).__init__(*args, **kwargs)
-        self.remote = self.backend.beets_api
+        super(SubsonicLibraryProvider, self).__init__(*args, **kwargs)
+        self.remote = SubsonicRemoteClient(settings.SUBSONIC_SERVER_URI,
+            settings.SUBSONIC_SERVER_PORT,
+            settings.SUBSONIC_USERNAME,
+            settings.SUBSONIC_PASSWORD)
 
     def find_exact(self, query=None, uris=None):
             return self.search(query=query, uris=uris)
@@ -23,15 +27,15 @@ class BeetsLibraryProvider(base.BaseLibraryProvider):
             return []
 
         if not query:
-            # Fetch all data(browse library)
+            # Fetch all artists(browse library)
             return SearchResult(
-                uri='beets:search',
-                tracks=self.remote.get_tracks())
+                uri='subsonic:search',
+                tracks=self.remote.get_artists())
 
         self._validate_query(query)
         if 'any' in query:
             return SearchResult(
-                uri='beets:search-any',
+                uri='subsonic:search-any',
                 tracks=self.remote.get_item_by(query['any'][0]) or [])
         else:
             search = []
@@ -47,13 +51,13 @@ class BeetsLibraryProvider(base.BaseLibraryProvider):
                     search.append(val[0])
             logger.debug('Search query "%s":' % search)
             return SearchResult(
-                uri='beets:search-' + '-'.join(search),
+                uri='subsonic:search-' + '-'.join(search),
                 tracks=self.remote.get_item_by('/'.join(search)) or [])
 
     def lookup(self, uri):
         try:
-            id = uri.split(";")[1]
-            logger.debug('Beets track id for "%s": %s' % (id, uri))
+            id = uri.split("//")[1]
+            logger.debug('Subsonic track id for "%s": %s' % id, uri)
             return [self.remote.get_track(id, True)]
         except Exception as error:
             logger.debug('Failed to lookup "%s": %s' % (uri, error))

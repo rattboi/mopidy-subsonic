@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import logging
 import libsonic
 import time
+import re
 from pprint import pprint
 
 from mopidy.models import Track, Album, Artist
@@ -85,12 +86,45 @@ class SubsonicRemoteClient(object):
         tracks = []
         for artist in artists:
             tracks.append(self.get_track(artist))
+
         return tracks
       
+    @cache()
+    def get_albums_by(self, name):
+      tracks = self.get_artists()
+
+      artist_id = None
+
+      for track in tracks:
+        artist = next(iter(track.artists))
+        if (artist.name == name):
+          artist_id = int(''.join(x for x in track.uri if x.isdigit()))
+          break
+
+      if artist_id:
+        tracks = []
+
+        albums = self.api.getArtist(artist_id)
+
+        if int(albums['artist']['albumCount']) > 1:
+          for album in albums['artist']['album']:
+            tracks.append(self.get_album(album))
+        else:
+          tracks.append(self.get_album(albums['artist']['album']))
+
+        return tracks
+
+      return []
+
+
+    @cache(ctl=16)
+    def get_album(self, id):
+        stuff = self._get_album(id)
+        return stuff
+
     @cache(ctl=16)
     def get_track(self, id, remote_url=False):
         stuff = self._convert_data(id, remote_url)
-        #pprint(stuff)
         return stuff
 
     @cache()
@@ -134,11 +168,54 @@ class SubsonicRemoteClient(object):
             return tracks
         return None
 
+    def _get_album(self, data):
+        if not data:
+            return
+
+
+        track_kwargs = {}
+        album_kwargs = {}
+        artist_kwargs = {}
+        albumartist_kwargs = {}
+
+        if 'track' in data:
+            track_kwargs['track_no'] = int(data['track'])
+
+        if 'songCount' in data:
+            album_kwargs['num_tracks'] = int(data['songCount'])
+
+        if 'artist' in data:
+            artist_kwargs['name'] = data['artist']
+            albumartist_kwargs['name'] = data['artist']
+
+        if 'name' in data:
+            album_kwargs['name'] = data['name']
+
+        if 'albumartist' in data:
+            albumartist_kwargs['name'] = data['albumartist']
+
+        if artist_kwargs:
+            artist = Artist(**artist_kwargs)
+            track_kwargs['artists'] = [artist]
+
+        if albumartist_kwargs:
+            albumartist = Artist(**albumartist_kwargs)
+            album_kwargs['artists'] = [albumartist]
+
+        if album_kwargs:
+            album = Album(**album_kwargs)
+            track_kwargs['album'] = album
+
+        track_kwargs['uri'] = 'subsonic://%s' % data['id']
+#        track_kwargs['length'] = int(data.get('duration', 0)) 
+
+        track = Track(**track_kwargs)
+
+        return track
+
     def _convert_data(self, data, remote_url=False):
         if not data:
             return
-        # NOTE kwargs dict keys must be bytestrings to work on Python < 2.6.5
-        # See https://github.com/mopidy/mopidy/issues/302 for details.
 
         track_kwargs = {}
         album_kwargs = {}

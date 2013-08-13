@@ -45,11 +45,15 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
                 if field == "album":
                     search.append(val[0])
                 if field == "artist":
-                    search.append(val[0])
+                    #search.append(val[0])
+                    return SearchResult(
+                        uri='subsonic:artist',
+                        tracks=self.remote.get_albums_by(val[0]))
                 if field == "track":
                     search.append(val[0])
                 if field == "date":
                     search.append(val[0])
+
             logger.debug('Search query "%s":' % search)
             return SearchResult(
                 uri='subsonic:search-' + '-'.join(search),

@@ -62,7 +62,6 @@ class SubsonicRemoteClient(object):
             try:
                 self.api.getIndexes()
             except Exception as e:
-                print("exception")
                 logger.error('Subsonic Authentication error: %s' % e)
 
     @cache()
@@ -70,7 +69,13 @@ class SubsonicRemoteClient(object):
         artist_list = self.api.getArtists().get('artists').get('index')
         categories = []
         for x in xrange(len(artist_list)):
-          categories.append(artist_list[x].get('artist'))
+          artists = []
+          artist = artist_list[x].get('artist')
+          if type(artist) == dict:
+            artists.append(artist)
+          else:
+            artists = artist
+          categories.append(artists)
 
         artists = []
         for category in xrange(len(categories)):

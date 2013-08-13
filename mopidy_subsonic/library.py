@@ -13,18 +13,19 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
 
     def __init__(self, *args, **kwargs):
         super(SubsonicLibraryProvider, self).__init__(*args, **kwargs)
-        self.remote = SubsonicRemoteClient(config.Hostname(),
-            config.Port(),
-            config.Username(),
-            config.Password())
+        self.config = self.backend.config
+        self.remote = SubsonicRemoteClient(self.config['subsonic']['hostname'],
+            self.config['subsonic']['port'],
+            self.config['subsonic']['username'],
+            self.config['subsonic']['password'])
 
     def find_exact(self, query=None, uris=None):
             return self.search(query=query, uris=uris)
 
     def search(self, query=None, uris=None):
         logger.debug('Query "%s":' % query)
-        if not self.remote.has_connection:
-            return []
+#        if not self.remote.has_connection:
+#            return []
 
         if not query:
             # Fetch all artists(browse library)

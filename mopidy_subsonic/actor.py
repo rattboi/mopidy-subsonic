@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import logging
 import pykka
 
-from mopidy import settings
 from mopidy.backends import base
 
 from .library import SubsonicLibraryProvider
@@ -15,7 +14,8 @@ class SubsonicBackend(pykka.ThreadingActor, base.Backend):
     def __init__(self, config, audio):
         super(SubsonicBackend, self).__init__()
 
-        self.library = SubsonicLibraryProvider(backend=self, config=config)
+        self.config = config
+        self.library = SubsonicLibraryProvider(backend=self)
         self.playback = SubsonicPlaybackProvider(audio=audio, backend=self)
         self.playlists = None
 

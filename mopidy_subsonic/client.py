@@ -116,6 +116,45 @@ class SubsonicRemoteClient(object):
 
       return []
 
+    @cache()
+    def get_tracks_by(self, artist_query, album_query):
+      (q_artist,) = artist_query
+      (q_album,) = album_query
+      pprint(q_artist)
+      pprint(q_album)
+      
+      tracks = self.get_artists()
+
+      artist_id = None
+
+      for track in tracks:
+        artist = next(iter(track.artists))
+        if (artist.name == q_artist):
+          artist_id = int(''.join(x for x in track.uri if x.isdigit()))
+          break
+
+      if artist_id:
+        tracks = []
+
+        albums = self.api.getArtist(artist_id)
+
+        if int(albums['artist']['albumCount']) > 1:
+          for album in albums['artist']['album']:
+            if album['name'] == q_album:
+              album_id = album['id']
+              songs = self.api.getAlbum(album_id)
+              for song in songs['album']['song']:
+                tracks.append(self.get_track(song))
+        else:
+            if albums['artist']['album']['name'] == q_album:
+              album_id = albums['artist']['album']['id']
+              songs = self.api.getAlbum(album_id)
+              for song in songs['album']['song']:
+                tracks.append(self.get_track(song))
+
+        return tracks
+
+      return []
 
     @cache(ctl=16)
     def get_album(self, id):
@@ -134,6 +173,7 @@ class SubsonicRemoteClient(object):
             return self._parse_query(res)
         except Exception:
             return False
+
 
     @cache()
     def get_album_by(self, name):

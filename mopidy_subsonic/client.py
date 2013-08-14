@@ -14,9 +14,16 @@ from mopidy.models import Track, Album, Artist
 logger = logging.getLogger('mopidy.backends.subsonic.client')
 
 ##
+# Forces hashes into lists
+#
+def makelist(x):
+    if type(x) == dict:
+        return [x]
+    else:
+        return x
+
+##
 # Unescapes all the unicode values in a query return value
-#
-#
 #
 
 def unescapeobj(obj):
@@ -88,7 +95,6 @@ class cache(object):
                 return self.func(*args)
         return _memoized
 
-
 class SubsonicRemoteClient(object):
 
     def __init__(self, hostname, port, username, password):
@@ -110,97 +116,62 @@ class SubsonicRemoteClient(object):
 
     @cache()
     def get_artists(self):
-        artist_list = unescapeobj(self.api.getArtists()).get('artists').get('index')
-        categories = []
-        for x in xrange(len(artist_list)):
-          artists = []
-          artist = artist_list[x].get('artist')
-          if type(artist) == dict:
-            artists.append(artist)
-          else:
-            artists = artist
-          categories.append(artists)
+        # get the artist indexes (segmented by a,b,c,...)
+        categories = unescapeobj(self.api.getArtists()).get('artists').get('index')
 
-        artists = []
-        for category in xrange(len(categories)):
-          for artist in xrange(len(categories[category])):
-            artists.append(categories[category][artist])
-
+        # for each category, get it's artists out, turn them into tracks, and return those tracks
         tracks = []
-        for artist in artists:
-            tracks.append(self.get_track(artist))
+        for category in categories:
+          artists = makelist(category.get('artist'))
+          for artist in artists:
+              tracks.append(self.get_track(artist))
 
         return tracks
 
     @cache()
-    def get_albums_by(self, name):
-      tracks = self.get_artists()
+    def get_artist_id(self, artist_query):
+      artist_tracks = self.get_artists()
 
-      artist_id = None
+      for track in artist_tracks:
+        artist = next(iter(track.artists)) #unpack the frozenset
+        if (artist.name == artist_query):
+          return int(''.join(x for x in track.uri if x.isdigit())) # pull the id number from the URI
+      return None
 
-      for track in tracks:
-        artist = next(iter(track.artists))
-        if (artist.name == name):
-          artist_id = int(''.join(x for x in track.uri if x.isdigit()))
-          break
-
-      if artist_id:
-        tracks = []
-
-        albums = unescapeobj(self.api.getArtist(artist_id))
-
-        if int(albums['artist']['albumCount']) > 1:
-          for album in albums['artist']['album']:
-            tracks.append(self.get_album(album))
-        else:
-          tracks.append(self.get_album(albums['artist']['album']))
-
-        return tracks
-
-      return []
+    @cache()
+    def artist_id_to_albums(self, artist_id):
+      if not artist_id:
+        return []
+      return unescapeobj(self.api.getArtist(artist_id)).get('artist').get('album')
 
     @cache()
     def get_tracks_by(self, artist_query, album_query):
-      q_artist = next(iter(artist_query))
-      q_album  = next(iter(album_query))
+      q_artist = None
+      q_album = None
+
+      if artist_query:
+        q_artist = next(iter(artist_query))
+      if album_query:
+        q_album  = next(iter(album_query))
       
-      tracks = self.get_artists()
+      artist_id = self.get_artist_id(q_artist)
+      albums = makelist(self.artist_id_to_albums(artist_id))
 
-      artist_id = None
-
-      for track in tracks:
-        artist = next(iter(track.artists))
-        if (artist.name == q_artist):
-          artist_id = int(''.join(x for x in track.uri if x.isdigit()))
-          break
-
-      if artist_id:
-        tracks = []
-
-        albums = unescapeobj(self.api.getArtist(artist_id))
-
-        if int(albums['artist']['albumCount']) > 1:
-          for album in albums['artist']['album']:
-            if album['name'] == q_album:
-              album_id = album['id']
-              songs = unescapeobj(self.api.getAlbum(album_id))
-              for song in songs['album']['song']:
-                tracks.append(self.get_track(song))
+      tracks = []
+      for album in albums:
+        if q_album:
+          if album['name'] == q_album:
+            album_id = album['id']
+            songs = unescapeobj(self.api.getAlbum(album_id)).get('album')
+            for song in songs['song']:
+              tracks.append(self.get_track(song))
         else:
-            if albums['artist']['album']['name'] == q_album:
-              album_id = albums['artist']['album']['id']
-              songs = unescapeobj(self.api.getAlbum(album_id))
-              for song in songs['album']['song']:
-                tracks.append(self.get_track(song))
+          album_id = album['id']
+          songs = unescapeobj(self.api.getAlbum(album_id)).get('album')
+          for song in songs['song']:
+            tracks.append(self.get_track(song))
 
-        return tracks
-
-      return []
-
-    @cache(ctl=16)
-    def get_album(self, id):
-        stuff = self._get_album(id)
-        return stuff
+      return tracks
 
     @cache(ctl=16)
     def get_track(self, id, remote_url=False):
@@ -212,15 +183,6 @@ class SubsonicRemoteClient(object):
         res = self._get('/item/query/%s' % name).get('results')
         try:
             return self._parse_query(res)
-        except Exception:
-            return False
-
-
-    @cache()
-    def get_album_by(self, name):
-        res = self._get('/album/query/%s' % name).get('results')
-        try:
-            return self._parse_query(res[0]['items'])
         except Exception:
             return False
 
@@ -248,50 +210,6 @@ class SubsonicRemoteClient(object):
                 tracks.append(self._convert_data(track))
             return tracks
         return None
-
-    def _get_album(self, data):
-        if not data:
-            return
-
-        track_kwargs = {}
-        album_kwargs = {}
-        artist_kwargs = {}
-        albumartist_kwargs = {}
-
-        if 'track' in data:
-            track_kwargs['track_no'] = int(data['track'])
-
-        if 'songCount' in data:
-            album_kwargs['num_tracks'] = int(data['songCount'])
-
-        if 'artist' in data:
-            artist_kwargs['name'] = data['artist']
-            albumartist_kwargs['name'] = data['artist']
-
-        if 'name' in data:
-            album_kwargs['name'] = data['name']
-
-        if 'albumartist' in data:
-            albumartist_kwargs['name'] = data['albumartist']
-
-        if artist_kwargs:
-            artist = Artist(**artist_kwargs)
-            track_kwargs['artists'] = [artist]
-
-        if albumartist_kwargs:
-            albumartist = Artist(**albumartist_kwargs)
-            album_kwargs['artists'] = [albumartist]
-
-        if album_kwargs:
-            album = Album(**album_kwargs)
-            track_kwargs['album'] = album
-
-        track_kwargs['uri'] = 'subsonic://%s' % data['id']
-        track_kwargs['length'] = int(data.get('duration', 0)) 
-
-        track = Track(**track_kwargs)
-
-        return track
 
     def _convert_data(self, data, remote_url=False):
         if not data:

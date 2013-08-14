@@ -34,47 +34,46 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
                 tracks=self.remote.get_artists())
 
         self._validate_query(query)
-        if 'any' in query:
-            return SearchResult(
-                uri='subsonic:search-any',
-                tracks=self.remote.get_item_by(query['any'][0]) or [])
-        else:
-            search = []
-            album  = False
-            artist = False
-            track  = False
 
-            for (field,val) in query.iteritems():
-              if field == 'album':
-                album = True
+        search = []
+        album  = False
+        artist = False
+        track  = False
 
-              if field == 'artist':
-                artist = True
+        for (field,val) in query.iteritems():
+          if field == 'album':
+            album = True
 
-              if field == 'track':
-                track = True
+          if field == 'artist':
+            artist = True
 
-            if album and artist:
-                    return SearchResult(
-                        uri='subsonic:tracks',
-                        tracks=self.remote.get_tracks_by(query['artist'], query['album']))
+          if field == 'track':
+            track = True
 
-            for (field, val) in query.iteritems():
-                if field == "album":
-                    search.append(val[0])
-                if field == "artist":
-                    return SearchResult(
-                        uri='subsonic:artist',
-                        tracks=self.remote.get_albums_by(val[0]))
-                if field == "track":
-                    search.append(val[0])
-                if field == "date":
-                    search.append(val[0])
+        if album and artist:
+                return SearchResult(
+                    uri='subsonic:tracks',
+                    tracks=self.remote.get_tracks_by(query['artist'], query['album']))
 
-            logger.debug('Search query "%s":' % search)
-            return SearchResult(
-                uri='subsonic:search-' + '-'.join(search),
-                tracks=self.remote.get_item_by('/'.join(search)) or [])
+        if artist:
+                return SearchResult(
+                    uri='subsonic:tracks',
+                    tracks=self.remote.get_tracks_by(query['artist'],None))
+
+        for (field, val) in query.iteritems():
+            if field == "album":
+                search.append(val[0])
+            if field == "artist":
+                search.append(val[0])
+            if field == "track":
+                search.append(val[0])
+            if field == "date":
+                search.append(val[0])
+
+        logger.debug('Search query "%s":' % search)
+        return SearchResult(
+            uri='subsonic:search-' + '-'.join(search),
+            tracks=self.remote.get_item_by('/'.join(search)) or [])
 
     def lookup(self, uri):
         try:

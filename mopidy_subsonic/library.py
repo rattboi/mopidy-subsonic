@@ -41,24 +41,24 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
         track  = False
 
         for (field,val) in query.iteritems():
-          if field == 'album':
-            album = True
+            if field == 'album':
+                album = True
 
-          if field == 'artist':
-            artist = True
+            if field == 'artist':
+                artist = True
 
-          if field == 'track':
-            track = True
+            if field == 'track':
+                track = True
 
         if album and artist:
-                return SearchResult(
-                    uri='subsonic:tracks',
-                    tracks=self.remote.get_tracks_by(query['artist'], query['album']))
+            return SearchResult(
+                uri='subsonic:tracks',
+                tracks=self.remote.get_tracks_by(query['artist'], query['album']))
 
         if artist:
-                return SearchResult(
-                    uri='subsonic:tracks',
-                    tracks=self.remote.get_tracks_by(query['artist'],None))
+            return SearchResult(
+                uri='subsonic:tracks',
+                tracks=self.remote.get_tracks_by(query['artist'],None))
 
         for (field, val) in query.iteritems():
             if field == "album":

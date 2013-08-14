@@ -101,7 +101,7 @@ class SubsonicRemoteClient(object):
         super(SubsonicRemoteClient, self).__init__()
 
         if not (hostname and port and username and password):
-          logger.error('Subsonic API settings are not fully defined: %s %s %s %s' % (hostname, port, username, password))
+            logger.error('Subsonic API settings are not fully defined: %s %s %s %s' % (hostname, port, username, password))
         else:
             self.api_hostname = hostname
             self.api_port = port
@@ -122,56 +122,56 @@ class SubsonicRemoteClient(object):
         # for each category, get it's artists out, turn them into tracks, and return those tracks
         tracks = []
         for category in categories:
-          artists = makelist(category.get('artist'))
-          for artist in artists:
-              tracks.append(self.get_track(artist))
+            artists = makelist(category.get('artist'))
+            for artist in artists:
+                tracks.append(self.get_track(artist))
 
         return tracks
 
     @cache()
     def get_artist_id(self, artist_query):
-      artist_tracks = self.get_artists()
+        artist_tracks = self.get_artists()
 
-      for track in artist_tracks:
-        artist = next(iter(track.artists)) #unpack the frozenset
-        if (artist.name == artist_query):
-          return int(''.join(x for x in track.uri if x.isdigit())) # pull the id number from the URI
-      return None
+        for track in artist_tracks:
+            artist = next(iter(track.artists)) #unpack the frozenset
+            if (artist.name == artist_query):
+                return int(''.join(x for x in track.uri if x.isdigit())) # pull the id number from the URI
+        return None
 
     @cache()
     def artist_id_to_albums(self, artist_id):
-      if not artist_id:
-        return []
-      return unescapeobj(self.api.getArtist(artist_id)).get('artist').get('album')
+        if not artist_id:
+            return []
+        return unescapeobj(self.api.getArtist(artist_id)).get('artist').get('album')
 
     @cache()
     def get_tracks_by(self, artist_query, album_query):
-      q_artist = None
-      q_album = None
+        q_artist = None
+        q_album = None
 
-      if artist_query:
-        q_artist = next(iter(artist_query))
-      if album_query:
-        q_album  = next(iter(album_query))
-      
-      artist_id = self.get_artist_id(q_artist)
-      albums = makelist(self.artist_id_to_albums(artist_id))
+        if artist_query:
+            q_artist = next(iter(artist_query))
+        if album_query:
+            q_album  = next(iter(album_query))
 
-      tracks = []
-      for album in albums:
-        if q_album:
-          if album['name'] == q_album:
-            album_id = album['id']
-            songs = unescapeobj(self.api.getAlbum(album_id)).get('album')
-            for song in songs['song']:
-              tracks.append(self.get_track(song))
-        else:
-          album_id = album['id']
-          songs = unescapeobj(self.api.getAlbum(album_id)).get('album')
-          for song in songs['song']:
-            tracks.append(self.get_track(song))
+        artist_id = self.get_artist_id(q_artist)
+        albums = makelist(self.artist_id_to_albums(artist_id))
 
-      return tracks
+        tracks = []
+        for album in albums:
+            if q_album:
+                if album['name'] == q_album:
+                    album_id = album['id']
+                    songs = unescapeobj(self.api.getAlbum(album_id)).get('album')
+                    for song in songs['song']:
+                        tracks.append(self.get_track(song))
+            else:
+                album_id = album['id']
+                songs = unescapeobj(self.api.getAlbum(album_id)).get('album')
+                for song in songs['song']:
+                    tracks.append(self.get_track(song))
+
+        return tracks
 
     @cache(ctl=16)
     def get_track(self, id, remote_url=False):

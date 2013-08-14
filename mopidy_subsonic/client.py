@@ -13,6 +13,49 @@ from mopidy.models import Track, Album, Artist
 
 logger = logging.getLogger('mopidy.backends.subsonic.client')
 
+##
+# Unescapes all the unicode values in a query return value
+#
+#
+#
+
+def unescapeobj(obj):
+    if type(obj) == dict:
+        newdict = {}
+        for key,val in obj.iteritems():
+            newdict[key] = unescapeobj(val)
+        return newdict
+    elif type(obj) == list:
+        newlist = []
+        for val in obj:
+            newlist.append(unescapeobj(val))
+        return newlist
+    elif type(obj) == unicode:
+        return unescape(obj)
+    else:
+        return obj
+
+##
+# Removes HTML or XML character references and entities from a text string.
+#
+# @param text The HTML (or XML) source text.
+# @return The plain text, as a Unicode string, if necessary.
+
+def unescape(text):
+    def fixup(m):
+        text = m.group(0)
+        if text[:2] == "&#":
+            # character reference
+            try:
+                if text[:3] == "&#x":
+                    return unichr(int(text[3:-1], 16))
+                else:
+                    return unichr(int(text[2:-1]))
+            except ValueError:
+                pass
+        return text # leave as is
+    return re.sub("&#?\w+;", fixup, text)
+
 class cache(object):
     # TODO: merge this to util library
     def __init__(self, ctl=8, ttl=3600):
@@ -67,7 +110,7 @@ class SubsonicRemoteClient(object):
 
     @cache()
     def get_artists(self):
-        artist_list = self.api.getArtists().get('artists').get('index')
+        artist_list = unescapeobj(self.api.getArtists()).get('artists').get('index')
         categories = []
         for x in xrange(len(artist_list)):
           artists = []
@@ -88,7 +131,7 @@ class SubsonicRemoteClient(object):
             tracks.append(self.get_track(artist))
 
         return tracks
-      
+
     @cache()
     def get_albums_by(self, name):
       tracks = self.get_artists()
@@ -104,7 +147,7 @@ class SubsonicRemoteClient(object):
       if artist_id:
         tracks = []
 
-        albums = self.api.getArtist(artist_id)
+        albums = unescapeobj(self.api.getArtist(artist_id))
 
         if int(albums['artist']['albumCount']) > 1:
           for album in albums['artist']['album']:
@@ -118,10 +161,8 @@ class SubsonicRemoteClient(object):
 
     @cache()
     def get_tracks_by(self, artist_query, album_query):
-      (q_artist,) = artist_query
-      (q_album,) = album_query
-      pprint(q_artist)
-      pprint(q_album)
+      q_artist = next(iter(artist_query))
+      q_album  = next(iter(album_query))
       
       tracks = self.get_artists()
 
@@ -136,19 +177,19 @@ class SubsonicRemoteClient(object):
       if artist_id:
         tracks = []
 
-        albums = self.api.getArtist(artist_id)
+        albums = unescapeobj(self.api.getArtist(artist_id))
 
         if int(albums['artist']['albumCount']) > 1:
           for album in albums['artist']['album']:
             if album['name'] == q_album:
               album_id = album['id']
-              songs = self.api.getAlbum(album_id)
+              songs = unescapeobj(self.api.getAlbum(album_id))
               for song in songs['album']['song']:
                 tracks.append(self.get_track(song))
         else:
             if albums['artist']['album']['name'] == q_album:
               album_id = albums['artist']['album']['id']
-              songs = self.api.getAlbum(album_id)
+              songs = unescapeobj(self.api.getAlbum(album_id))
               for song in songs['album']['song']:
                 tracks.append(self.get_track(song))
 
@@ -212,7 +253,6 @@ class SubsonicRemoteClient(object):
         if not data:
             return
 
-
         track_kwargs = {}
         album_kwargs = {}
         artist_kwargs = {}
@@ -247,7 +287,7 @@ class SubsonicRemoteClient(object):
             track_kwargs['album'] = album
 
         track_kwargs['uri'] = 'subsonic://%s' % data['id']
-#        track_kwargs['length'] = int(data.get('duration', 0)) 
+        track_kwargs['length'] = int(data.get('duration', 0)) 
 
         track = Track(**track_kwargs)
 
@@ -285,21 +325,8 @@ class SubsonicRemoteClient(object):
         if 'title' in data:
             track_kwargs['name'] = data['title']
 
-        if 'date' in data:
-            track_kwargs['date'] = data['date']
-
-        if 'mb_trackid' in data:
-            track_kwargs['musicbrainz_id'] = data['mb_trackid']
-
-        if 'mb_albumid' in data:
-            album_kwargs['musicbrainz_id'] = data['mb_albumid']
-
-        if 'mb_artistid' in data:
-            artist_kwargs['musicbrainz_id'] = data['mb_artistid']
-
-        if 'mb_albumartistid' in data:
-            albumartist_kwargs['musicbrainz_id'] = (
-                data['mb_albumartistid'])
+        if 'year' in data:
+            track_kwargs['date'] = data['year']
 
         if 'album_id' in data:
             album_art_url = '%s/album/%s/art' % (

@@ -279,7 +279,7 @@ class SubsonicRemoteClient(object):
             track_kwargs['album'] = album
 
         track_kwargs['uri'] = 'subsonic://%s' % data['id']
-        track_kwargs['length'] = int(data.get('length', 0)) * 1000
+        track_kwargs['length'] = int(data.get('duration', 0)) * 1000
 
         track = Track(**track_kwargs)
 

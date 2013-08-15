@@ -180,14 +180,14 @@ class SubsonicRemoteClient(object):
         return tracks
 
     @cache(ctl=16)
-    def get_track(self, data, remote_url=False):
-        stuff = self._convert_data(data, remote_url)
+    def get_track(self, data):
+        stuff = self._convert_data(data)
         return stuff
 
     def get_song(self, id):
       try:
         song = unescapeobj(self.api.getSong(int(id)).get('song'))
-        track = self.get_track(song, False)
+        track = self.get_track(song)
         return track
       except Exception as error:
         logger.debug('Failed in get_song: %s' % error)
@@ -226,7 +226,7 @@ class SubsonicRemoteClient(object):
             return tracks
         return None
 
-    def _convert_data(self, data, remote_url=False):
+    def _convert_data(self, data):
         if not data:
             return
 
@@ -278,11 +278,7 @@ class SubsonicRemoteClient(object):
             album = Album(**album_kwargs)
             track_kwargs['album'] = album
 
-        if remote_url:
-            track_kwargs['uri'] = '%s/item/%s/file' % (
-                self.api_hostname, data['id'])
-        else:
-            track_kwargs['uri'] = 'subsonic://%s' % data['id']
+        track_kwargs['uri'] = 'subsonic://%s' % data['id']
         track_kwargs['length'] = int(data.get('length', 0)) * 1000
 
         track = Track(**track_kwargs)

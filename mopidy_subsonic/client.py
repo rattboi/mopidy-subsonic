@@ -118,6 +118,7 @@ class SubsonicRemoteClient(object):
                 self.api.getIndexes()
             except Exception as e:
                 logger.error('Subsonic Authentication error: %s' % e)
+                exit()
 
     @cache()
     def get_artists(self):

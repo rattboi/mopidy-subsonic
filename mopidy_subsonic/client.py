@@ -100,14 +100,14 @@ class SubsonicRemoteClient(object):
     def __init__(self, hostname, port, username, password, ssl):
         super(SubsonicRemoteClient, self).__init__()
 
-        if not (hostname and port and username and password and ssl):
+        if not (hostname and port and username and password):
             logger.error('Subsonic API settings are not fully defined: %s %s %s %s %s' % (hostname, port, username, password, ssl))
         else:
             self.api_hostname = hostname
             self.api_port = port
             self.api_user = username
             self.api_pass = password
-            if ssl == "yes":
+            if ssl: 
               self.api_hostname = "https://" + hostname
             else:
               self.api_hostname = "http://" + hostname

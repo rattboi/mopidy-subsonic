@@ -174,9 +174,18 @@ class SubsonicRemoteClient(object):
         return tracks
 
     @cache(ctl=16)
-    def get_track(self, id, remote_url=False):
-        stuff = self._convert_data(id, remote_url)
+    def get_track(self, data, remote_url=False):
+        stuff = self._convert_data(data, remote_url)
         return stuff
+
+    def get_song(self, id):
+      try:
+        song = unescapeobj(self.api.getSong(int(id)).get('song'))
+        track = self.get_track(song, False)
+        return track
+      except Exception as error:
+        logger.debug('Failed in get_song: %s' % error)
+        return []
 
     @cache()
     def get_item_by(self, name):
@@ -273,3 +282,7 @@ class SubsonicRemoteClient(object):
         track = Track(**track_kwargs)
 
         return track
+      
+    def build_url_from_song_id(self, id):
+        uri="%s:%d/%s/%s?id=%s&u=%s&p=%s&c=mopidy&v=1.8" % (self.api._baseUrl, self.api._port, self.api._serverPath, 'stream.view', id, self.api._username, self.api._rawPass)  
+        return uri

@@ -6,6 +6,8 @@ import pykka
 from mopidy.backends import base
 
 from .library import SubsonicLibraryProvider
+from mopidy.models import Track
+from pprint import pprint
 
 logger = logging.getLogger('mopidy.backends.subsonic')
 
@@ -24,9 +26,7 @@ class SubsonicBackend(pykka.ThreadingActor, base.Backend):
 
 class SubsonicPlaybackProvider(base.BasePlaybackProvider):
 
-    # FIXME
     def play(self, track):
-        id = track.uri.split(';')[1]
-        logger.info('Getting info for track %s with id %s' % (track.uri, id))
-        track = self.backend.remote.get_track(id, True)
+        logger.info('Getting info for track %s' % (track.uri))
         return super(SubsonicPlaybackProvider, self).play(track)
+

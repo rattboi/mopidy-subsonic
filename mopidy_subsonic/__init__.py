@@ -34,10 +34,11 @@ class SubsonicExtension(ext.Extension):
 
     def get_config_schema(self):
         schema = super(SubsonicExtension, self).get_config_schema()
-        schema['hostname'] = config.String()
+        schema['hostname'] = config.Hostname()
         schema['port'] = config.String()
         schema['username'] = config.String()
         schema['password'] = config.String()
+        schema['ssl'] = config.String()
         return schema
 
     def validate_environment(self):

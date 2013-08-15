@@ -4,11 +4,6 @@ Mopidy-Subsonic
 `Mopidy <http://www.mopidy.com/>`_ extension for playing music from
 `Subsonic <http://www.subsonic.org/>`_
 
-Note
-====
-
-The below is inaccurate currently. Very much WIP.
-
 Usage
 -----
 
@@ -20,10 +15,11 @@ Usage
    your ``ext.conf``::
 
     [subsonic]
-    hostname = 127.0.0.1
+    hostname = some.website.com (leave off http/https)
     port = 8888
     username = USER
     password = PASS
+    ssl = (yes/no)
 
 #. Restart Mopidy.
 

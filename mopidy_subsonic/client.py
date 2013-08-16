@@ -17,28 +17,30 @@ logger = logging.getLogger('mopidy.backends.subsonic.client')
 # Forces hashes into lists
 #
 def makelist(x):
-    if type(x) == dict:
-        return [x]
-    else:
+    if isinstance(x, list):
         return x
+    else:
+        return [x]
 
 ##
 # Unescapes all the unicode values in a query return value
 #
-
 def unescapeobj(obj):
-    if type(obj) == dict:
+  return apply_to_struct(obj, unescape, unicode)
+
+def apply_to_struct(obj, f, t):
+    if isinstance(obj, dict):
         newdict = {}
         for key,val in obj.iteritems():
             newdict[key] = unescapeobj(val)
         return newdict
-    elif type(obj) == list:
+    elif isinstance(obj,list):
         newlist = []
         for val in obj:
             newlist.append(unescapeobj(val))
         return newlist
-    elif type(obj) == unicode:
-        return unescape(obj)
+    elif isinstance(obj,t):
+        return f(obj)
     else:
         return obj
 
@@ -123,12 +125,12 @@ class SubsonicRemoteClient(object):
     @cache()
     def get_artists(self):
         # get the artist indexes (segmented by a,b,c,...)
-        categories = unescapeobj(self.api.getArtists()).get('artists').get('index')
+        indexes = unescapeobj(self.api.getIndexes()).get('indexes').get('index')
 
-        # for each category, get it's artists out, turn them into tracks, and return those tracks
+        # for each index, get it's artists out, turn them into tracks, and return those tracks
         tracks = []
-        for category in categories:
-            artists = makelist(category.get('artist'))
+        for index in indexes:
+            artists = makelist(index.get('artist'))
             for artist in artists:
                 tracks.append(self.get_track(artist))
 
@@ -145,10 +147,10 @@ class SubsonicRemoteClient(object):
         return None
 
     @cache()
-    def artist_id_to_albums(self, artist_id):
-        if not artist_id:
+    def id_to_dir(self, id):
+        if not id:
             return []
-        return unescapeobj(self.api.getArtist(artist_id)).get('artist').get('album')
+        return unescapeobj(self.api.getMusicDirectory(id).get('directory').get('child'))
 
     @cache()
     def get_tracks_by(self, artist_query, album_query):
@@ -161,20 +163,20 @@ class SubsonicRemoteClient(object):
             q_album  = next(iter(album_query))
 
         artist_id = self.get_artist_id(q_artist)
-        albums = makelist(self.artist_id_to_albums(artist_id))
+        albums = makelist(self.id_to_dir(artist_id))
 
         tracks = []
         for album in albums:
             if q_album:
-                if album['name'] == q_album:
+                if album['album'] == q_album:
                     album_id = album['id']
-                    songs = unescapeobj(self.api.getAlbum(album_id)).get('album')
-                    for song in makelist(songs['song']):
+                    songs = self.id_to_dir(album_id)
+                    for song in makelist(songs):
                         tracks.append(self.get_track(song))
             else:
                 album_id = album['id']
-                songs = unescapeobj(self.api.getAlbum(album_id)).get('album')
-                for song in makelist(songs['song']):
+                songs = unescapeobj(self.id_to_dir(album_id))
+                for song in makelist(songs):
                     tracks.append(self.get_track(song))
 
         return tracks

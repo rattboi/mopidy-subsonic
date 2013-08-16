@@ -169,12 +169,12 @@ class SubsonicRemoteClient(object):
                 if album['name'] == q_album:
                     album_id = album['id']
                     songs = unescapeobj(self.api.getAlbum(album_id)).get('album')
-                    for song in songs['song']:
+                    for song in makelist(songs['song']):
                         tracks.append(self.get_track(song))
             else:
                 album_id = album['id']
                 songs = unescapeobj(self.api.getAlbum(album_id)).get('album')
-                for song in songs['song']:
+                for song in makelist(songs['song']):
                     tracks.append(self.get_track(song))
 
         return tracks

@@ -256,8 +256,12 @@ class SubsonicRemoteClient(object):
             album = Album(**album_kwargs)
             track_kwargs['album'] = album
 
-        track_kwargs['uri'] = 'subsonic://%s' % data['id']
         track_kwargs['length'] = int(data.get('duration', 0)) * 1000
+
+        if not 'title' in data:
+          track_kwargs['uri'] = 'subsonic://%s' % data['id']
+        else:
+          track_kwargs['uri'] = 'subsonic://%s' % self.build_url_from_song_id(data['id'])
 
         track = Track(**track_kwargs)
 

@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import logging
+import re
 
 from mopidy.backends import base
 from mopidy.models import SearchResult
@@ -40,12 +41,14 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
 
     def lookup(self, uri):
         try:
-            id = uri.split("//")[1]
-            logger.debug('Subsonic track id for "%s": %s' % (id, uri))
-            track = self.remote.get_song(id)
-            built_uri = self.remote.build_url_from_song_id(id)
+            id_re = re.compile("(?<=id=)(?P<id>.*?)(?=&)")
+            match = id_re.search(uri)
+            song_id = match.group('id')
+            track = self.remote.get_song(song_id)
+            real_uri = uri.split("subsonic://")[1]
+            logger.debug('Subsonic track id for "%s": %s' % (real_uri,id))
             ntrack = Track(
-                uri=built_uri,
+                uri=real_uri,
                 name=track.name, 
                 artists=track.artists, 
                 album=track.album, 

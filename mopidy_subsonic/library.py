@@ -27,8 +27,6 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
 
     def search(self, query=None, uris=None):
         logger.debug('Query "%s":' % query)
-#        if not self.remote.has_connection:
-#            return []
 
         if not query:
             # Fetch all artists(browse library)
@@ -36,47 +34,9 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
                 uri='subsonic:search',
                 tracks=self.remote.get_artists())
 
-        self._validate_query(query)
-
-        search = []
-        album  = False
-        artist = False
-        track  = False
-
-        for (field,val) in query.iteritems():
-            if field == 'album':
-                album = True
-
-            if field == 'artist':
-                artist = True
-
-            if field == 'track':
-                track = True
-
-        if album and artist:
-            return SearchResult(
-                uri='subsonic:tracks',
-                tracks=self.remote.get_tracks_by(query['artist'], query['album']))
-
-        if artist:
-            return SearchResult(
-                uri='subsonic:tracks',
-                tracks=self.remote.get_tracks_by(query['artist'],None))
-
-        for (field, val) in query.iteritems():
-            if field == "album":
-                search.append(val[0])
-            if field == "artist":
-                search.append(val[0])
-            if field == "track":
-                search.append(val[0])
-            if field == "date":
-                search.append(val[0])
-
-        logger.debug('Search query "%s":' % search)
         return SearchResult(
-            uri='subsonic:search-' + '-'.join(search),
-            tracks=self.remote.get_item_by('/'.join(search)) or [])
+            uri='subsonic:tracks',
+            tracks=self.remote.get_tracks_by(query.get('artist'), query.get('album')))
 
     def lookup(self, uri):
         try:
@@ -98,11 +58,3 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
         except Exception as error:
             logger.debug('Failed to lookup "%s": %s' % (uri, error))
             return []
-
-    def _validate_query(self, query):
-        for (_, values) in query.iteritems():
-            if not values:
-                raise LookupError('Missing query')
-            for value in values:
-                if not value:
-                    raise LookupError('Missing query')

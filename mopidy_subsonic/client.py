@@ -32,12 +32,12 @@ def apply_to_struct(obj, f, t):
     if isinstance(obj, dict):
         newdict = {}
         for key,val in obj.iteritems():
-            newdict[key] = unescapeobj(val)
+            newdict[key] = apply_to_struct(val, f, t)
         return newdict
     elif isinstance(obj,list):
         newlist = []
         for val in obj:
-            newlist.append(unescapeobj(val))
+            newlist.append(apply_to_struct(val, f, t))
         return newlist
     elif isinstance(obj,t):
         return f(obj)
@@ -117,24 +117,28 @@ class SubsonicRemoteClient(object):
             self.api = libsonic.Connection(self.api_hostname, self.api_user, self.api_pass, port=int(self.api_port))
             logger.info('Connecting to Subsonic library %s:%s as user %s', self.api_hostname, self.api_port, self.api_user)
             try:
-                self.api.getIndexes()
+                self.api.ping()
             except Exception as e:
                 logger.error('Subsonic Authentication error: %s' % e)
                 exit()
 
     @cache()
     def get_artists(self):
-        # get the artist indexes (segmented by a,b,c,...)
-        indexes = unescapeobj(self.api.getIndexes()).get('indexes').get('index')
+        try:
+            # get the artist indexes (segmented by a,b,c,...)
+            indexes = unescapeobj(self.api.getIndexes().get('indexes').get('index'))
 
-        # for each index, get it's artists out, turn them into tracks, and return those tracks
-        tracks = []
-        for index in indexes:
-            artists = makelist(index.get('artist'))
-            for artist in artists:
-                tracks.append(self.get_track(artist))
+            # for each index, get it's artists out, turn them into tracks, and return those tracks
+            tracks = []
+            for index in indexes:
+                artists = makelist(index.get('artist'))
+                for artist in artists:
+                    tracks.append(self.get_track(artist))
 
-        return tracks
+            return tracks
+        except Exception as error:
+            logger.debug('Failed in get_artists: %s' % error)
+            return []
 
     @cache()
     def get_artist_id(self, artist_query):
@@ -148,9 +152,13 @@ class SubsonicRemoteClient(object):
 
     @cache()
     def id_to_dir(self, id):
-        if not id:
+        try:
+            if not id:
+                return []
+            return unescapeobj(self.api.getMusicDirectory(id).get('directory').get('child'))
+        except Exception as error:
+            logger.debug('Failed in id_to_dir: %s' % error)
             return []
-        return unescapeobj(self.api.getMusicDirectory(id).get('directory').get('child'))
 
     @cache()
     def get_tracks_by(self, artist_query, album_query):
@@ -175,58 +183,26 @@ class SubsonicRemoteClient(object):
                         tracks.append(self.get_track(song))
             else:
                 album_id = album['id']
-                songs = unescapeobj(self.id_to_dir(album_id))
+                songs = self.id_to_dir(album_id)
                 for song in makelist(songs):
                     tracks.append(self.get_track(song))
 
         return tracks
 
+    @cache()
+    def get_song(self, id):
+        try:
+            song = unescapeobj(self.api.getSong(id).get('song'))
+            track = self.get_track(song)
+            return track
+        except Exception as error:
+            logger.debug('Failed in get_song: %s' % error)
+            return []
+
     @cache(ctl=16)
     def get_track(self, data):
         stuff = self._convert_data(data)
         return stuff
-
-    def get_song(self, id):
-      try:
-        song = unescapeobj(self.api.getSong(int(id)).get('song'))
-        track = self.get_track(song)
-        return track
-      except Exception as error:
-        logger.debug('Failed in get_song: %s' % error)
-        return []
-
-    @cache()
-    def get_item_by(self, name):
-        res = self._get('/item/query/%s' % name).get('results')
-        try:
-            return self._parse_query(res)
-        except Exception:
-            return False
-
-    def _get(self, url):
-        try:
-            indexes = self.api.getIndexes()
-            url = self.api_hostname + ":" + self.api_port + url
-            logger.debug('Requesting %s' % url)
-            #req = self.api.get(url)
-            #if req.status_code != 200:
-                #raise logger.error('Request %s, failed with status code %s' % (
-                    #url, req.status_code))
-
-            #return req.json()
-            return indexes
-        except Exception as e:
-            logger.error('Request %s, failed with error %s' % (
-                url, e))
-            return False
-
-    def _parse_query(self, res):
-        if len(res) > 0:
-            tracks = []
-            for track in res:
-                tracks.append(self._convert_data(track))
-            return tracks
-        return None
 
     def _convert_data(self, data):
         if not data:

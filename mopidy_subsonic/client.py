@@ -134,7 +134,6 @@ class SubsonicRemoteClient(object):
                 artists = makelist(index.get('artist'))
                 for artist in artists:
                     tracks.append(self.get_track(artist))
-
             return tracks
         except Exception as error:
             logger.debug('Failed in get_artists: %s' % error)
@@ -257,6 +256,7 @@ class SubsonicRemoteClient(object):
             track_kwargs['album'] = album
 
         track_kwargs['length'] = int(data.get('duration', 0)) * 1000
+        track_kwargs['bitrate'] = data.get('bitRate', 0)
 
         if not 'title' in data:
           track_kwargs['uri'] = 'subsonic://%s' % data['id']

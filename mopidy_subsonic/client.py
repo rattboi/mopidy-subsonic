@@ -7,9 +7,10 @@ import logging
 import libsonic
 import time
 import re
+from datetime import datetime
 from pprint import pprint
 
-from mopidy.models import Track, Album, Artist
+from mopidy.models import Track, Album, Artist, Playlist
 
 logger = logging.getLogger('mopidy.backends.subsonic.client')
 
@@ -161,12 +162,9 @@ class SubsonicRemoteClient(object):
 
     @cache()
     def album_to_tracks(self, album):
-        tracks = []
         album_id = album['id']
         songs = self.id_to_dir(album_id)
-        for song in makelist(songs):
-            tracks.append(self.get_track(song))
-        return tracks
+        return [self.get_track(song) for song in makelist(songs)]
 
     @cache()
     def id_to_albums(self, id):
@@ -174,7 +172,6 @@ class SubsonicRemoteClient(object):
 
         albums = []
         for dir in dirs:
-            pprint(dir)
             if dir.get('album'):
                 albums.append(dir)
             else:
@@ -216,8 +213,8 @@ class SubsonicRemoteClient(object):
 
     @cache(ctl=16)
     def get_track(self, data):
-        stuff = self._convert_data(data)
-        return stuff
+        track = self._convert_data(data) 
+        return track
 
     def _convert_data(self, data):
         if not data:
@@ -254,11 +251,6 @@ class SubsonicRemoteClient(object):
         if 'year' in data:
             track_kwargs['date'] = data['year']
 
-        if 'album_id' in data:
-            album_art_url = '%s/album/%s/art' % (
-                self.api_hostname, data['album_id'])
-            album_kwargs['images'] = [album_art_url]
-
         if artist_kwargs:
             artist = Artist(**artist_kwargs)
             track_kwargs['artists'] = [artist]
@@ -275,9 +267,9 @@ class SubsonicRemoteClient(object):
         track_kwargs['bitrate'] = data.get('bitRate', 0)
 
         if not 'title' in data:
-          track_kwargs['uri'] = 'subsonic://%s' % data['id']
+            track_kwargs['uri'] = 'subsonic://%s' % data['id']
         else:
-          track_kwargs['uri'] = 'subsonic://%s' % self.build_url_from_song_id(data['id'])
+            track_kwargs['uri'] = 'subsonic://%s' % self.build_url_from_song_id(data['id'])
 
         track = Track(**track_kwargs)
 
@@ -288,11 +280,20 @@ class SubsonicRemoteClient(object):
         return uri
 
     def search_tracks(self, track):
-        tracks = []
         results = unescapeobj(self.api.search2(track, artistCount=0, albumCount=0, songCount=1000).get('searchResult2').get('song'))
-        for song in makelist(results):
-            tracks.append(self.get_track(song))
+        return [self.get_track(song) for song in makelist(results)]
 
-        return tracks
+    def get_playlists(self):
+        results = makelist(unescapeobj(self.api.getPlaylists().get('playlists').get('playlist')))
+        return [Playlist(uri=u'subsonic://%s' % playlist.get('id'),
+                         name=playlist.get('name'),
+                         last_modified=datetime.strptime(playlist.get('created'),'%Y-%m-%dT%H:%M:%S'))
+                         for playlist in results]
 
-
+    def playlist_id_to_playlist(self, id):
+        playlist = unescapeobj(self.api.getPlaylist(id).get('playlist'))
+        songs = playlist.get('entry')
+        return Playlist(uri=u'subsonic://%s' % playlist.get('id'),
+                        name=playlist.get('name'),
+                        last_modified=datetime.strptime(playlist.get('created'),'%Y-%m-%dT%H:%M:%S'),
+                        tracks=[self.get_track(song) for song in makelist(songs)])

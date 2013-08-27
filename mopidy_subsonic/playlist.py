@@ -15,8 +15,9 @@ class SubsonicPlaylistsProvider(base.BasePlaylistsProvider):
     def __init__(self, *args, **kwargs):
         super(SubsonicPlaylistsProvider, self).__init__(*args, **kwargs)
         self.remote = self.backend.remote
-        self.playlists = []
+        self.playlists = self.remote.get_playlists()
 
     def lookup(self, uri):
-        logger.info("Playlist lookup")
-        return None
+        logger.debug('Playlist lookup. uri = %s' % uri)
+        id = uri.split("subsonic://")[1]
+        return self.remote.playlist_id_to_playlist(id)

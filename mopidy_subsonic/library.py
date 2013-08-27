@@ -44,19 +44,7 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
             match = id_re.search(uri)
             song_id = match.group('id')
             track = self.remote.get_song(song_id)
-            real_uri = uri.split("subsonic://")[1]
-            logger.debug('Subsonic track id for "%s": %s' % (real_uri,id))
-            ntrack = Track(
-                uri=real_uri,
-                name=track.name, 
-                artists=track.artists, 
-                album=track.album, 
-                track_no=track.track_no, 
-                disc_no=track.disc_no, 
-                date=track.date, 
-                length=track.length, 
-                bitrate=track.bitrate)
-            return [ntrack]
+            return [track]
         except Exception as error:
             logger.debug('Failed to lookup "%s": %s' % (uri, error))
             return []

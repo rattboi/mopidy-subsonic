@@ -10,7 +10,6 @@ from .playlist import SubsonicPlaylistsProvider
 from .client import SubsonicRemoteClient
 
 from mopidy.models import Track
-from pprint import pprint
 
 logger = logging.getLogger('mopidy.backends.subsonic')
 
@@ -37,6 +36,17 @@ class SubsonicBackend(pykka.ThreadingActor, base.Backend):
 class SubsonicPlaybackProvider(base.BasePlaybackProvider):
 
     def play(self, track):
-        logger.info('Getting info for track %s' % (track.uri))
-        return super(SubsonicPlaybackProvider, self).play(track)
+        logger.debug('Getting info for track %s' % (track.name))
+        real_uri = track.uri.split("subsonic://")[1]
+        ntrack = Track(
+            uri=real_uri,
+            name=track.name,
+            artists=track.artists,
+            album=track.album,
+            track_no=track.track_no,
+            disc_no=track.disc_no,
+            date=track.date,
+            length=track.length,
+            bitrate=track.bitrate)
+        return super(SubsonicPlaybackProvider, self).play(ntrack)
 

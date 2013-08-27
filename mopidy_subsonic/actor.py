@@ -6,6 +6,9 @@ import pykka
 from mopidy.backends import base
 
 from .library import SubsonicLibraryProvider
+from .playlist import SubsonicPlaylistsProvider
+from .client import SubsonicRemoteClient
+
 from mopidy.models import Track
 from pprint import pprint
 
@@ -16,10 +19,17 @@ class SubsonicBackend(pykka.ThreadingActor, base.Backend):
     def __init__(self, config, audio):
         super(SubsonicBackend, self).__init__()
 
+        self.remote = SubsonicRemoteClient(
+            config['subsonic']['hostname'],
+            config['subsonic']['port'],
+            config['subsonic']['username'],
+            config['subsonic']['password'],
+            config['subsonic']['ssl'])
+
         self.config = config
         self.library = SubsonicLibraryProvider(backend=self)
         self.playback = SubsonicPlaybackProvider(audio=audio, backend=self)
-        self.playlists = None
+        self.playlists = SubsonicPlaylistsProvider(backend=self)
 
         self.uri_schemes = ['subsonic']
 

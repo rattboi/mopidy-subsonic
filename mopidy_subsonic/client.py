@@ -160,6 +160,28 @@ class SubsonicRemoteClient(object):
             return []
 
     @cache()
+    def album_to_tracks(self, album):
+        tracks = []
+        album_id = album['id']
+        songs = self.id_to_dir(album_id)
+        for song in makelist(songs):
+            tracks.append(self.get_track(song))
+        return tracks
+
+    @cache()
+    def id_to_albums(self, id):
+        dirs = makelist(self.id_to_dir(id))
+
+        albums = []
+        for dir in dirs:
+            pprint(dir)
+            if dir.get('album'):
+                albums.append(dir)
+            else:
+                albums.extend(self.id_to_albums(dir.get('id')))
+        return albums
+
+    @cache()
     def get_tracks_by(self, artist_query, album_query):
         q_artist = None
         q_album = None
@@ -170,21 +192,15 @@ class SubsonicRemoteClient(object):
             q_album  = next(iter(album_query))
 
         artist_id = self.get_artist_id(q_artist)
-        albums = makelist(self.id_to_dir(artist_id))
+        albums = makelist(self.id_to_albums(artist_id))
 
         tracks = []
         for album in albums:
             if q_album:
-                if album['album'] == q_album:
-                    album_id = album['id']
-                    songs = self.id_to_dir(album_id)
-                    for song in makelist(songs):
-                        tracks.append(self.get_track(song))
+                if album.get('album') == q_album:
+                    tracks.extend(self.album_to_tracks(album))
             else:
-                album_id = album['id']
-                songs = self.id_to_dir(album_id)
-                for song in makelist(songs):
-                    tracks.append(self.get_track(song))
+                tracks.extend(self.album_to_tracks(album))
 
         return tracks
 
@@ -270,3 +286,13 @@ class SubsonicRemoteClient(object):
     def build_url_from_song_id(self, id):
         uri="%s:%d/%s/%s?id=%s&u=%s&p=%s&c=mopidy&v=1.8" % (self.api._baseUrl, self.api._port, self.api._serverPath, 'stream.view', id, self.api._username, self.api._rawPass)  
         return uri
+
+    def search_tracks(self, track):
+        tracks = []
+        results = unescapeobj(self.api.search2(track, artistCount=0, albumCount=0, songCount=1000).get('searchResult2').get('song'))
+        for song in makelist(results):
+            tracks.append(self.get_track(song))
+
+        return tracks
+
+

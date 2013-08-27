@@ -24,7 +24,7 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
             self.config['subsonic']['ssl'])
 
     def find_exact(self, query=None, uris=None):
-            return self.search(query=query, uris=uris)
+        return self.search(query=query, uris=uris)
 
     def search(self, query=None, uris=None):
         logger.debug('Query "%s":' % query)
@@ -34,6 +34,11 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
             return SearchResult(
                 uri='subsonic:search',
                 tracks=self.remote.get_artists())
+
+        if 'track' in query:
+            return SearchResult(
+                    uri='subsonic:tracks',
+                    tracks=self.remote.search_tracks(query['track'][0]))
 
         return SearchResult(
             uri='subsonic:tracks',

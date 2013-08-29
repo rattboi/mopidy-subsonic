@@ -1,3 +1,4 @@
 *.pyc
 *.egg-info*
 mopidy_subsonic/ext.conf
+dist

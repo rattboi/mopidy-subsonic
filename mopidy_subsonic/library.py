@@ -18,25 +18,36 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
         self.remote = self.backend.remote
         
     def find_exact(self, query=None, uris=None):
-        return self.search(query=query, uris=uris)
-
-    def search(self, query=None, uris=None):
-        logger.debug('Query "%s":' % query)
-
         if not query:
             # Fetch all artists(browse library)
             return SearchResult(
                 uri='subsonic:search',
                 tracks=self.remote.get_artists())
 
-        if 'track' in query:
-            return SearchResult(
-                    uri='subsonic:tracks',
-                    tracks=self.remote.search_tracks(query['track'][0]))
-
         return SearchResult(
             uri='subsonic:tracks',
             tracks=self.remote.get_tracks_by(query.get('artist'), query.get('album')))
+
+    def search(self, query=None, uris=None):
+        logger.debug('Query "%s":' % query)
+
+        artist,album,title,any = None,None,None,None
+
+        if 'artist' in query:
+            artist = query['artist'][0]
+
+        if 'album' in query:
+            album = query['album'][0]
+
+        if 'track' in query:
+            title = query['track'][0]
+
+        if 'any' in query:
+            any = query['any'][0]
+
+        return SearchResult(
+                uri='subsonic:tracks',
+                tracks=self.remote.search_tracks(artist,album,title,any))
 
     def lookup(self, uri):
         try:

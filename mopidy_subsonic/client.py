@@ -274,14 +274,74 @@ class SubsonicRemoteClient(object):
         track = Track(**track_kwargs)
 
         return track
-      
+
     def build_url_from_song_id(self, id):
         uri="%s:%d/%s/%s?id=%s&u=%s&p=%s&c=mopidy&v=1.8" % (self.api._baseUrl, self.api._port, self.api._serverPath, 'stream.view', id, self.api._username, self.api._rawPass)  
         return uri
 
-    def search_tracks(self, track):
-        results = unescapeobj(self.api.search2(track, artistCount=0, albumCount=0, songCount=1000).get('searchResult2').get('song'))
-        return [self.get_track(song) for song in makelist(results)]
+    def search_artist(self, artist):
+        artist_set = set()
+        results = unescapeobj(self.api.search2(artist,100,0,0,0,0,0).get('searchResult2'))
+
+        if 'artist' in results:
+            for artist in makelist(results.get('artist')):
+                artist_id = artist.get('id')
+                for album in makelist(self.id_to_albums(artist_id)):
+                    artist_set |= set(self.album_to_tracks(album))
+        return artist_set
+
+    def search_album(self, album):
+        album_set = set()
+        results = unescapeobj(self.api.search2(album,0,0,100,0,0,0).get('searchResult2'))
+
+        if 'album' in results:
+            for album in makelist(results.get('album')):
+                album_set |= set(self.album_to_tracks(album))
+        return album_set
+
+    def search_title(self, title):
+        song_set = set()
+        results = unescapeobj(self.api.search2(title,0,0,0,0,1000,0).get('searchResult2'))
+
+        if 'song' in results:
+            song_set = set([self.get_track(song) for song in makelist(results.get('song'))])
+        return song_set
+
+    def search_any(self, any):
+        artist_set = self.search_artist(any)
+        album_set  = self.search_album(any)
+        title_set  = self.search_title(any)
+        return artist_set | album_set | title_set
+
+    def search_tracks(self, artist, album, title, any):
+        any_set,artist_set,album_set,song_set = set(),set(),set(),set()
+
+        if any is not None:
+            any_set = self.search_any(any)
+
+        if artist is not None:
+            artist_set = self.search_artist(artist)
+
+        if album is not None:
+            album_set = self.search_album(album)
+
+        if title is not None:
+            song_set = self.search_title(title)
+
+        final_set = set()
+        if any is not None:
+            final_set = any_set if not final_set else (final_set & any_set)
+        if artist is not None:
+            final_set = artist_set if not final_set else (final_set & artist_set)
+        if album is not None:
+            final_set = album_set  if not final_set else (final_set & album_set)
+        if title is not None:
+            final_set = song_set   if not final_set else (final_set & song_set)
+
+        final_list = list(final_set)
+        final_list.sort(key=lambda x: (next(iter(x.artists)).name, x.album.name, x.track_no))
+
+        return final_list
 
     def get_playlists(self):
         results = makelist(unescapeobj(self.api.getPlaylists().get('playlists').get('playlist')))

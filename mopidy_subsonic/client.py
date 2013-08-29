@@ -343,10 +343,10 @@ class SubsonicRemoteClient(object):
 
         return final_list
 
-    def get_playlists(self):
+    def get_user_playlists(self):
         results = makelist(unescapeobj(self.api.getPlaylists().get('playlists').get('playlist')))
         return [Playlist(uri=u'subsonic://%s' % playlist.get('id'),
-                         name=playlist.get('name'),
+                         name='User Playlist: %s' % playlist.get('name'),
                          last_modified=datetime.strptime(playlist.get('created'),'%Y-%m-%dT%H:%M:%S'))
                          for playlist in results]
 
@@ -354,6 +354,20 @@ class SubsonicRemoteClient(object):
         playlist = unescapeobj(self.api.getPlaylist(id).get('playlist'))
         songs = playlist.get('entry')
         return Playlist(uri=u'subsonic://%s' % playlist.get('id'),
-                        name=playlist.get('name'),
+                        name='User Playlist: %s' % playlist.get('name'),
                         last_modified=datetime.strptime(playlist.get('created'),'%Y-%m-%dT%H:%M:%S'),
                         tracks=[self.get_track(song) for song in makelist(songs)])
+
+    def get_smart_playlist(self, type):
+        tracks = []
+        try:
+            albums = makelist(unescapeobj(self.api.getAlbumList(type,5).get('albumList').get('album')))
+            for album in albums:
+                tracks.extend(self.album_to_tracks(album))
+            return Playlist(uri=u'subsonic://%s' % type,
+                            name=type,
+                            tracks=tracks)
+        except:
+            return Playlist(uri=u'subsonic://%s' % type,
+                            name=type,
+                            tracks=[])

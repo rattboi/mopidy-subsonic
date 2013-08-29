@@ -15,9 +15,26 @@ class SubsonicPlaylistsProvider(base.BasePlaylistsProvider):
     def __init__(self, *args, **kwargs):
         super(SubsonicPlaylistsProvider, self).__init__(*args, **kwargs)
         self.remote = self.backend.remote
-        self.playlists = self.remote.get_playlists()
+        self.playlists = self._get_playlists()
 
     def lookup(self, uri):
         logger.debug('Playlist lookup. uri = %s' % uri)
         id = uri.split("subsonic://")[1]
-        return self.remote.playlist_id_to_playlist(id)
+        try:
+            id = int(id)
+            return self.remote.playlist_id_to_playlist(id)
+        except:
+            return self.remote.get_smart_playlist(id)
+
+    def _get_playlists(self):
+        smart_playlists = {'random':'Random',
+                           'newest':'Recently Added',
+                           'highest': 'Top Rated',
+                           'frequent': 'Most Played',
+                           'recent': 'Recently Played'}
+        playlists = self.remote.get_user_playlists()
+        for type in smart_playlists.keys():
+            playlists.append(Playlist(uri=u'subsonic://%s' % type,
+                                      name='Smart Playlist: %s' % smart_playlists[type]))
+
+        return playlists

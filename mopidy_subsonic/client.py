@@ -300,12 +300,12 @@ class SubsonicRemoteClient(object):
         return album_set
 
     def search_title(self, title):
-        song_set = set()
+        title_set = set()
         results = unescapeobj(self.api.search2(title,0,0,0,0,1000,0).get('searchResult2'))
 
         if 'song' in results:
-            song_set = set([self.get_track(song) for song in makelist(results.get('song'))])
-        return song_set
+            title_set = set([self.get_track(song) for song in makelist(results.get('song'))])
+        return title_set
 
     def search_any(self, any):
         artist_set = self.search_artist(any)
@@ -314,39 +314,43 @@ class SubsonicRemoteClient(object):
         return artist_set | album_set | title_set
 
     def search_tracks(self, artist, album, title, any):
-        any_set,artist_set,album_set,song_set = set(),set(),set(),set()
+        any_set,artist_set,album_set,title_set = set(),set(),set(),set()
 
         if any is not None:
             any_set = self.search_any(any)
-
         if artist is not None:
             artist_set = self.search_artist(artist)
-
         if album is not None:
             album_set = self.search_album(album)
-
         if title is not None:
-            song_set = self.search_title(title)
+            title_set = self.search_title(title)
 
         final_set = set()
         if any is not None:
-            final_set = any_set if not final_set else (final_set & any_set)
+            final_set = any_set    if not final_set else (final_set & any_set)
         if artist is not None:
             final_set = artist_set if not final_set else (final_set & artist_set)
         if album is not None:
             final_set = album_set  if not final_set else (final_set & album_set)
         if title is not None:
-            final_set = song_set   if not final_set else (final_set & song_set)
+            final_set = title_set   if not final_set else (final_set & title_set)
 
         final_list = list(final_set)
         final_list.sort(key=lambda x: (next(iter(x.artists)).name, x.album.name, x.track_no))
 
         return final_list
 
+    # MPD doesn't like /, \n, or \r in names
+    # should only necessary until next release of mopidy
+    def fix_playlist_name(self, name):
+        _invalid_playlist_chars = re.compile(r'[\n\r/]') 
+        fixed_name = _invalid_playlist_chars.sub('-', name)
+        return fixed_name 
+
     def get_user_playlists(self):
         results = makelist(unescapeobj(self.api.getPlaylists().get('playlists').get('playlist')))
         return [Playlist(uri=u'subsonic://%s' % playlist.get('id'),
-                         name='User Playlist: %s' % playlist.get('name'),
+                         name='User Playlist: %s' % self.fix_playlist_name(playlist.get('name')),
                          last_modified=datetime.strptime(playlist.get('created'),'%Y-%m-%dT%H:%M:%S'))
                          for playlist in results]
 
@@ -354,7 +358,7 @@ class SubsonicRemoteClient(object):
         playlist = unescapeobj(self.api.getPlaylist(id).get('playlist'))
         songs = playlist.get('entry')
         return Playlist(uri=u'subsonic://%s' % playlist.get('id'),
-                        name='User Playlist: %s' % playlist.get('name'),
+                        name='User Playlist: %s' % self.fix_playlist_name(playlist.get('name')),
                         last_modified=datetime.strptime(playlist.get('created'),'%Y-%m-%dT%H:%M:%S'),
                         tracks=[self.get_track(song) for song in makelist(songs)])
 

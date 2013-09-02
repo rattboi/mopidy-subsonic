@@ -378,3 +378,14 @@ class SubsonicRemoteClient(object):
             return Playlist(uri=u'subsonic://%s' % type,
                             name=type,
                             tracks=[])
+
+    def generate_random_playlist(self):
+        try:
+            songs = makelist(unescapeobj(self.api.getRandomSongs(100).get('randomSongs').get('song')))
+            return Playlist(uri=u'subsonic://randomsongs',
+                            name='randomsongs',
+                            tracks=[self.get_track(song) for song in songs])
+        except:
+            return Playlist(uri=u'subsonic://randomsongs',
+                            name='randomsongs',
+                            tracks=[])

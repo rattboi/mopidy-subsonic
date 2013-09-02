@@ -24,14 +24,18 @@ class SubsonicPlaylistsProvider(base.BasePlaylistsProvider):
             id = int(id)
             return self.remote.playlist_id_to_playlist(id)
         except:
-            return self.remote.get_smart_playlist(id)
+            if (id == 'randomsongs'):
+                return self.remote.generate_random_playlist()
+            else:
+                return self.remote.get_smart_playlist(id)
 
     def _get_playlists(self):
-        smart_playlists = {'random':'Random',
+        smart_playlists = {'random':'Random Albums',
                            'newest':'Recently Added',
                            'highest': 'Top Rated',
                            'frequent': 'Most Played',
-                           'recent': 'Recently Played'}
+                           'recent': 'Recently Played',
+                           'randomsongs': 'Random Songs'}
         playlists = self.remote.get_user_playlists()
         for type in smart_playlists.keys():
             playlists.append(Playlist(uri=u'subsonic://%s' % type,

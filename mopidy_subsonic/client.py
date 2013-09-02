@@ -266,17 +266,20 @@ class SubsonicRemoteClient(object):
         track_kwargs['length'] = int(data.get('duration', 0)) * 1000
         track_kwargs['bitrate'] = data.get('bitRate', 0)
 
-        if not 'title' in data:
-            track_kwargs['uri'] = 'subsonic://%s' % data['id']
-        else:
-            track_kwargs['uri'] = 'subsonic://%s' % self.build_url_from_song_id(data['id'])
+        track_kwargs['uri'] = 'subsonic://%s' % data['id']
 
         track = Track(**track_kwargs)
 
         return track
 
     def build_url_from_song_id(self, id):
-        uri="%s:%d/%s/%s?id=%s&u=%s&p=%s&c=mopidy&v=1.8" % (self.api._baseUrl, self.api._port, self.api._serverPath, 'stream.view', id, self.api._username, self.api._rawPass)  
+        uri="%s:%d/%s/%s?id=%s&u=%s&p=%s&c=mopidy&v=1.8" % (self.api._baseUrl,
+                                                            self.api._port,
+                                                            self.api._serverPath,
+                                                            'stream.view',
+                                                            id,
+                                                            self.api._username,
+                                                            self.api._rawPass)
         return uri
 
     def search_artist(self, artist):

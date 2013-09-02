@@ -37,7 +37,8 @@ class SubsonicPlaybackProvider(base.BasePlaybackProvider):
 
     def play(self, track):
         logger.debug('Getting info for track %s' % (track.name))
-        real_uri = track.uri.split("subsonic://")[1]
+        id = track.uri.split("subsonic://")[1]
+        real_uri = self.backend.remote.build_url_from_song_id(id)
         ntrack = Track(
             uri=real_uri,
             name=track.name,

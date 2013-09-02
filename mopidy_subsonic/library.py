@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import logging
-import re
 
 from mopidy.backends import base
 from mopidy.models import SearchResult
@@ -51,9 +50,7 @@ class SubsonicLibraryProvider(base.BaseLibraryProvider):
 
     def lookup(self, uri):
         try:
-            id_re = re.compile("(?<=id=)(?P<id>.*?)(?=&)")
-            match = id_re.search(uri)
-            song_id = match.group('id')
+            song_id = uri.split("subsonic://")[1]
             track = self.remote.get_song(song_id)
             return [track]
         except Exception as error:

@@ -351,8 +351,12 @@ class SubsonicRemoteClient(object):
         return fixed_name 
 
     def get_user_playlists(self):
-        results = makelist(unescapeobj(self.api.getPlaylists().get('playlists').get('playlist')))
-        return [Playlist(uri=u'subsonic://%s' % playlist.get('id'),
+        results = self.api.getPlaylists().get('playlists')
+        if results is u'':
+            return []
+        else:
+            results = makelist(unescapeobj(self.api.getPlaylists().get('playlists').get('playlist')))
+            return [Playlist(uri=u'subsonic://%s' % playlist.get('id'),
                          name='User Playlist: %s' % self.fix_playlist_name(playlist.get('name')),
                          last_modified=datetime.strptime(playlist.get('created'),'%Y-%m-%dT%H:%M:%S'))
                          for playlist in results]

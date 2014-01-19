@@ -4,18 +4,16 @@ import logging
 
 from mopidy import backend
 from mopidy.models import SearchResult
-from mopidy.models import Track
-
-from .client import SubsonicRemoteClient
 
 logger = logging.getLogger(__name__)
+
 
 class SubsonicLibraryProvider(backend.LibraryProvider):
 
     def __init__(self, *args, **kwargs):
         super(SubsonicLibraryProvider, self).__init__(*args, **kwargs)
         self.remote = self.backend.remote
-        
+
     def find_exact(self, query=None, uris=None):
         if not query:
             # Fetch all artists(browse library)
@@ -25,12 +23,13 @@ class SubsonicLibraryProvider(backend.LibraryProvider):
 
         return SearchResult(
             uri='subsonic:tracks',
-            tracks=self.remote.get_tracks_by(query.get('artist'), query.get('album')))
+            tracks=self.remote.get_tracks_by(
+                query.get('artist'), query.get('album')))
 
     def search(self, query=None, uris=None):
         logger.debug('Query "%s":' % query)
 
-        artist,album,title,any = None,None,None,None
+        artist, album, title, any = None, None, None, None
 
         if 'artist' in query:
             artist = query['artist'][0]
@@ -45,8 +44,8 @@ class SubsonicLibraryProvider(backend.LibraryProvider):
             any = query['any'][0]
 
         return SearchResult(
-                uri='subsonic:tracks',
-                tracks=self.remote.search_tracks(artist,album,title,any))
+            uri='subsonic:tracks',
+            tracks=self.remote.search_tracks(artist, album, title, any))
 
     def lookup(self, uri):
         try:

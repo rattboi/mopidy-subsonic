@@ -8,7 +8,6 @@ import libsonic
 import time
 import re
 from datetime import datetime
-from pprint import pprint
 
 from mopidy.models import Track, Album, Artist, Playlist
 
@@ -27,7 +26,7 @@ def makelist(x):
 # Unescapes all the unicode values in a query return value
 #
 def unescapeobj(obj):
-  return apply_to_struct(obj, unescape, unicode)
+    return apply_to_struct(obj, unescape, unicode)
 
 def apply_to_struct(obj, f, t):
     if isinstance(obj, dict):

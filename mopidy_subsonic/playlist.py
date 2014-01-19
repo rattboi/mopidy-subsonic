@@ -1,15 +1,12 @@
 from __future__ import unicode_literals
 
 import logging
-import re
 
 from mopidy import backend
-from mopidy.models import Track
 from mopidy.models import Playlist
 
-from .client import SubsonicRemoteClient
-
 logger = logging.getLogger(__name__)
+
 
 class SubsonicPlaylistsProvider(backend.PlaylistsProvider):
     def __init__(self, *args, **kwargs):
@@ -30,15 +27,17 @@ class SubsonicPlaylistsProvider(backend.PlaylistsProvider):
                 return self.remote.get_smart_playlist(id)
 
     def _get_playlists(self):
-        smart_playlists = {'random':'Random Albums',
-                           'newest':'Recently Added',
+        smart_playlists = {'random': 'Random Albums',
+                           'newest': 'Recently Added',
                            'highest': 'Top Rated',
                            'frequent': 'Most Played',
                            'recent': 'Recently Played',
                            'randomsongs': 'Random Songs'}
         playlists = self.remote.get_user_playlists()
         for type in smart_playlists.keys():
-            playlists.append(Playlist(uri=u'subsonic://%s' % type,
-                                      name='Smart Playlist: %s' % smart_playlists[type]))
+            playlists.append(
+                Playlist(
+                    uri=u'subsonic://%s' % type,
+                    name='Smart Playlist: %s' % smart_playlists[type]))
 
         return playlists

@@ -13,6 +13,7 @@ from mopidy.models import Track
 
 logger = logging.getLogger(__name__)
 
+
 class SubsonicBackend(pykka.ThreadingActor, backend.Backend):
 
     def __init__(self, config, audio):
@@ -50,4 +51,3 @@ class SubsonicPlaybackProvider(backend.PlaybackProvider):
             length=track.length,
             bitrate=track.bitrate)
         return super(SubsonicPlaybackProvider, self).play(ntrack)
-

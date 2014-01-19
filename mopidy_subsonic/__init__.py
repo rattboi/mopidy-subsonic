@@ -4,23 +4,8 @@ import os
 from mopidy import ext, config
 from mopidy.exceptions import ExtensionError
 
-__doc__ = """A extension for playing music from Subsonic.
-
-This extension handles URIs starting with ``subsonic:`` and enables you to play music using a Subsonic server.
-
-See https://github.com/rattboi/mopidy-subsonic/ for further instructions on using this extension.
-
-**Issues:**
-
-https://github.com/rattboi/mopidy-subsonic/issues
-
-**Dependencies:**
-
-requests
-
-"""
-
 __version__ = '0.2'
+
 
 class SubsonicExtension(ext.Extension):
 

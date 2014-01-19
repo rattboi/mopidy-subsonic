@@ -26,6 +26,6 @@ class SubsonicExtension(ext.Extension):
         schema['ssl'] = config.Boolean()
         return schema
 
-    def get_backend_classes(self):
+    def setup(self, registry):
         from .actor import SubsonicBackend
-        return [SubsonicBackend]
+        registry.add('backend', SubsonicBackend)

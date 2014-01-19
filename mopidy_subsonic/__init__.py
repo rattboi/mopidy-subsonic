@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
 
 import os
+
 from mopidy import ext, config
-from mopidy.exceptions import ExtensionError
 
 __version__ = '0.2'
 
@@ -25,12 +25,6 @@ class SubsonicExtension(ext.Extension):
         schema['password'] = config.Secret()
         schema['ssl'] = config.Boolean()
         return schema
-
-    def validate_environment(self):
-        try:
-            import libsonic 
-        except ImportError as e:
-            raise ExtensionError('Library libsonic not found', e)
 
     def get_backend_classes(self):
         from .actor import SubsonicBackend

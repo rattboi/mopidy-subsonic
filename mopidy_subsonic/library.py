@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 
-from mopidy.backends import base
+from mopidy import backend
 from mopidy.models import SearchResult
 from mopidy.models import Track
 
@@ -10,7 +10,7 @@ from .client import SubsonicRemoteClient
 
 logger = logging.getLogger('mopidy.backends.subsonic')
 
-class SubsonicLibraryProvider(base.BaseLibraryProvider):
+class SubsonicLibraryProvider(backend.LibraryProvider):
 
     def __init__(self, *args, **kwargs):
         super(SubsonicLibraryProvider, self).__init__(*args, **kwargs)

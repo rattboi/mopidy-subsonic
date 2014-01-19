@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import logging
 import re
 
-from mopidy.backends import base
+from mopidy import backend
 from mopidy.models import Track
 from mopidy.models import Playlist
 
@@ -11,7 +11,7 @@ from .client import SubsonicRemoteClient
 
 logger = logging.getLogger('mopidy.backends.subsonic')
 
-class SubsonicPlaylistsProvider(base.BasePlaylistsProvider):
+class SubsonicPlaylistsProvider(backend.PlaylistsProvider):
     def __init__(self, *args, **kwargs):
         super(SubsonicPlaylistsProvider, self).__init__(*args, **kwargs)
         self.remote = self.backend.remote

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import logging
 import pykka
 
-from mopidy.backends import base
+from mopidy import backend
 
 from .library import SubsonicLibraryProvider
 from .playlist import SubsonicPlaylistsProvider
@@ -13,7 +13,7 @@ from mopidy.models import Track
 
 logger = logging.getLogger('mopidy.backends.subsonic')
 
-class SubsonicBackend(pykka.ThreadingActor, base.Backend):
+class SubsonicBackend(pykka.ThreadingActor, backend.Backend):
 
     def __init__(self, config, audio):
         super(SubsonicBackend, self).__init__()
@@ -33,7 +33,7 @@ class SubsonicBackend(pykka.ThreadingActor, base.Backend):
         self.uri_schemes = ['subsonic']
 
 
-class SubsonicPlaybackProvider(base.BasePlaybackProvider):
+class SubsonicPlaybackProvider(backend.PlaybackProvider):
 
     def play(self, track):
         logger.debug('Getting info for track %s' % (track.name))

@@ -58,6 +58,9 @@ v0.3 (UNRELEASED)
 
 - Require Mopidy >= 0.18.
 
+- Fixed: ``ext.conf`` was missing from the PyPI package, stopping Mopidy from
+  working as long as Mopidy-Subsonic is installed.
+
 v0.2 (2013-11-13)
 -----------------
 

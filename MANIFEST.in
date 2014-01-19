@@ -1,4 +1,4 @@
 include LICENSE
 include MANIFEST.in
 include README.rst
-include mopidy_subsonic/ext.conf.template
+include mopidy_subsonic/ext.conf

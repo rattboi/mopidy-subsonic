@@ -8,7 +8,7 @@ from mopidy.models import Track
 
 from .client import SubsonicRemoteClient
 
-logger = logging.getLogger('mopidy.backends.subsonic')
+logger = logging.getLogger(__name__)
 
 class SubsonicLibraryProvider(backend.LibraryProvider):
 

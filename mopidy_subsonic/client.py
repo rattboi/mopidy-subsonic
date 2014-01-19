@@ -12,7 +12,7 @@ from pprint import pprint
 
 from mopidy.models import Track, Album, Artist, Playlist
 
-logger = logging.getLogger('mopidy.backends.subsonic.client')
+logger = logging.getLogger(__name__)
 
 ##
 # Forces hashes into lists

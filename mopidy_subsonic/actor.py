@@ -11,7 +11,7 @@ from .client import SubsonicRemoteClient
 
 from mopidy.models import Track
 
-logger = logging.getLogger('mopidy.backends.subsonic')
+logger = logging.getLogger(__name__)
 
 class SubsonicBackend(pykka.ThreadingActor, backend.Backend):
 

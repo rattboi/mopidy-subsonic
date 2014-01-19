@@ -9,7 +9,7 @@ from mopidy.models import Playlist
 
 from .client import SubsonicRemoteClient
 
-logger = logging.getLogger('mopidy.backends.subsonic')
+logger = logging.getLogger(__name__)
 
 class SubsonicPlaylistsProvider(backend.PlaylistsProvider):
     def __init__(self, *args, **kwargs):

@@ -53,7 +53,7 @@ Project resources
 Changelog
 =========
 
-v0.3 (UNRELEASED)
+v0.3 (2014-01-19)
 -----------------
 
 - Require Mopidy >= 0.18.

@@ -64,7 +64,7 @@ v0.3 (UNRELEASED)
 v0.2 (2013-11-13)
 -----------------
 
-- TODO: Write
+- Fixed: Crash when starting Mopidy-Subsonic with zero playlists on server
 
 v0.1 (2013-08-29)
 -----------------

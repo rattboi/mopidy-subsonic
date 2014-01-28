@@ -4,7 +4,7 @@ import os
 
 from mopidy import ext, config
 
-__version__ = '0.3'
+__version__ = '0.3.1'
 
 
 class SubsonicExtension(ext.Extension):

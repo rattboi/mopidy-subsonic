@@ -53,6 +53,11 @@ Project resources
 Changelog
 =========
 
+v0.3.1 (2014-01-28)
+-----------------
+
+- Removed last_modified field from Playlist generation, to avoid problem in Mopidy core
+
 v0.3 (2014-01-19)
 -----------------
 

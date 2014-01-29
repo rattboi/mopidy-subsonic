@@ -129,12 +129,7 @@ class SubsonicRemoteClient(object):
             indexes = unescapeobj(self.api.getIndexes().get('indexes').get('index'))
 
             # for each index, get it's artists out, turn them into tracks, and return those tracks
-            tracks = []
-            for index in indexes:
-                artists = makelist(index.get('artist'))
-                for artist in artists:
-                    tracks.append(self.get_track(artist))
-            return tracks
+            return [self.get_track(artist) for index in indexes for artist in makelist(index.get('artist'))]
         except Exception as error:
             logger.debug('Failed in get_artists: %s' % error)
             return []
@@ -171,10 +166,11 @@ class SubsonicRemoteClient(object):
 
         albums = []
         for dir in dirs:
-            if dir.get('album'):
-                albums.append(dir)
-            else:
-                albums.extend(self.id_to_albums(dir.get('id')))
+            if dir != None:
+                if dir.get('album'):
+                    albums.append(dir)
+                else:
+                    albums.extend(self.id_to_albums(dir.get('id')))
         return albums
 
     @cache()
@@ -196,7 +192,9 @@ class SubsonicRemoteClient(object):
                 if album.get('album') == q_album:
                     tracks.extend(self.album_to_tracks(album))
             else:
-                tracks.extend(self.album_to_tracks(album))
+                album = self.album_to_tracks(album)
+                album = [x for x in album if x != None]
+                tracks.extend(album)
 
         return tracks
 
@@ -242,13 +240,15 @@ class SubsonicRemoteClient(object):
             albumartist_kwargs['name'] = data['albumartist']
 
         if 'album' in data:
-            album_kwargs['name'] = data['album']
+            album_kwargs['name'] = unicode(data['album']).replace('"','\\"')
 
         if 'title' in data:
             track_kwargs['name'] = data['title']
 
         if 'year' in data:
             track_kwargs['date'] = data['year']
+        else:
+            track_kwargs['date'] = 'none'
 
         if artist_kwargs:
             artist = Artist(**artist_kwargs)

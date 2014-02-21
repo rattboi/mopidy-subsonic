@@ -38,6 +38,7 @@ following to your Mopidy configuration::
     username = USER
     password = PASS
     ssl = (yes/no)
+    context = my-subsonic (if your subsonic is accessible on http://some.website.com:8888/my-subsonic/index.view)
 
 Searches in Mopidy will now return results from your Subsonic library.
 

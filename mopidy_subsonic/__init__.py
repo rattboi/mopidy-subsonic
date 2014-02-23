@@ -24,6 +24,7 @@ class SubsonicExtension(ext.Extension):
         schema['username'] = config.String()
         schema['password'] = config.Secret()
         schema['ssl'] = config.Boolean()
+        schema['context'] = config.String()
         return schema
 
     def setup(self, registry):

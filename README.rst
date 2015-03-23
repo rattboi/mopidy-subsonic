@@ -59,6 +59,8 @@ v1.0.0 (UNRELEASED)
 
 - Require Mopidy >= 1.0
 
+- Update to work with new playback API in Mopidy 1.0
+
 v0.3.1 (2014-01-28)
 -------------------
 

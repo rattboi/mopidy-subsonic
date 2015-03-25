@@ -54,8 +54,17 @@ Project resources
 Changelog
 =========
 
+v1.0.0 (UNRELEASED)
+-------------------
+
+- Require Mopidy >= 1.0
+
+- Update to work with new playback API in Mopidy 1.0
+
+- Update to work with new search API in Mopidy 1.0
+
 v0.3.1 (2014-01-28)
------------------
+-------------------
 
 - Removed last_modified field from Playlist generation, to avoid problem in Mopidy core
 

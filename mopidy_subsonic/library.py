@@ -14,7 +14,7 @@ class SubsonicLibraryProvider(backend.LibraryProvider):
         super(SubsonicLibraryProvider, self).__init__(*args, **kwargs)
         self.remote = self.backend.remote
 
-    def find_exact(self, query=None, uris=None):
+    def _find_exact(self, query=None, uris=None):
         if not query:
             # Fetch all artists(browse library)
             return SearchResult(
@@ -26,7 +26,10 @@ class SubsonicLibraryProvider(backend.LibraryProvider):
             tracks=self.remote.get_tracks_by(
                 query.get('artist'), query.get('album')))
 
-    def search(self, query=None, uris=None):
+    def search(self, query=None, uris=None, exact=False):
+        if exact:
+            return self._find_exact(query=query, uris=uris)
+
         logger.debug('Query "%s":' % query)
 
         artist, album, title, any = None, None, None, None

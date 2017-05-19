@@ -5,6 +5,15 @@ Mopidy-Subsonic
 NOTE: This project is now unmaintained!
 =======================================
 
+It looks like `loldaves fork <https://github.com/loldaves/mopidy-subsonic>`_ is a lot more maintained. I'd go check that out.
+
+
+
+
+
+
+
+
 .. image:: https://pypip.in/v/Mopidy-Subsonic/badge.png
     :target: https://pypi.python.org/pypi/Mopidy-Subsonic/
     :alt: Latest PyPI version

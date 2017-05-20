@@ -7,6 +7,7 @@ NOTE: This project is now unmaintained!
 
 It looks like `loldaves fork <https://github.com/loldaves/mopidy-subsonic>`_ is a lot more maintained. I'd go check that out.
 
+Or even better, try this separate plugin: `Prior99/mopidy-subidy <https://github.com/Prior99/mopidy-subidy>`_
 
 
 
